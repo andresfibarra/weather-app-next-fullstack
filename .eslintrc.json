@@ -1,0 +1,46 @@
+{
+  "root": true,
+  "extends": [
+    "next",
+    "next/core-web-vitals"
+  ],
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2023
+  },
+  "rules": {
+    "strict": 0,
+    "quotes": ["error", "single"],
+    "no-else-return": 0,
+    "new-cap": ["error", { "capIsNewExceptions": ["Router"] }],
+    "no-console": 0,
+    "import/no-unresolved": ["error", { "caseSensitive": false }],
+    "no-unused-vars": ["error", { "vars": "all", "args": "none" }],
+    "no-underscore-dangle": 0,
+    "arrow-body-style": 0,
+    "one-var": ["error", { "uninitialized": "always", "initialized": "never" }],
+    "one-var-declaration-per-line": ["error", "initializations"],
+    "max-len": ["error", { "code": 200 }],
+    "no-extra-parens": 0,
+    "no-restricted-syntax": 0,
+    "no-debugger": "warn",
+
+    /* These are old CRA-era rules; disable them for Next 13+ */
+    "react/react-in-jsx-scope": "off",
+    "react/jsx-uses-react": "off",
+
+    /* Keep your React preferences */
+    "react/prop-types": 0,
+    "react/destructuring-assignment": 0,
+    "react/jsx-first-prop-new-line": 0,
+    "react/jsx-filename-extension": ["error", { "extensions": [".jsx", ".js"] }],
+    "jsx-a11y/click-events-have-key-events": 0,
+    "jsx-a11y/no-noninteractive-element-interactions": 0,
+    "react/jsx-one-expression-per-line": 0,
+    "no-param-reassign": ["error", { "props": false }]
+  },
+  "plugins": ["react"]
+}
