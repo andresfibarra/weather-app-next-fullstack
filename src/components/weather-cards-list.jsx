@@ -12,7 +12,17 @@ export default function WeatherCardsList({ onRemove, onExpand }) {
   }
 
   return (
-    <div className="weather-cards-list">
+    <div
+      className="
+        grid
+        [grid-template-columns:repeat(auto-fit,minmax(420px,1fr))]
+        gap-6
+        w-full max-w-[90%]
+        my-8 mx-auto
+        px-4
+        animate-[fadeIn_0.3s_ease-in-out]
+      "
+    >
       {citiesWeather.map((data) => (
         <WeatherCard
           key={data.id || data.name}

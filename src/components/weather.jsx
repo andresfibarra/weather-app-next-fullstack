@@ -171,7 +171,7 @@ export default function Weather() {
   }, []);
 
   return (
-    <div className="weather-app">
+    <div className="flex flex-col items-center pt-6">
       {selectedWeather && (
         <WeatherCardModal weather={selectedWeather} onClose={handleCloseCardDetails} />
       )}
@@ -186,9 +186,25 @@ export default function Weather() {
         className="mb-4 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
       />
 
-      {loading && <div className="loading">Loading weather...</div>}
+      {loading && <div className="mt-1 text-[0.9rem] text-sky-400">Loading weather...</div>}
 
-      {!loading && error && <div className="error text-red-400">{error}</div>}
+      {!loading && error && (
+        <div
+          className="
+            mt-1
+            text-[0.9rem]
+            text-orange-500
+            bg-[rgba(127,29,29,0.18)]
+            border border-slate-50/5
+            px-[0.9rem] py-[0.6rem]
+            rounded-xl
+            max-w-[420px]
+            text-center
+          "
+        >
+          {error}
+        </div>
+      )}
 
       {citiesWeather && (
         <WeatherCardsList onRemove={handleRemoveCard} onExpand={handleOpenCardDetails} />
