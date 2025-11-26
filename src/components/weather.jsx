@@ -1,10 +1,11 @@
 // src/components/Weather.jsx
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import WeatherCardsList from '@/components/weather-cards-list';
 import WeatherCardModal from '@/components/weather-card-modal';
 import useStore from '@/store/useWeatherStore';
+import { supabase } from '@/utils/supabase/client';
 
 const debug = true;
 
@@ -20,6 +21,30 @@ export default function Weather() {
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
+
+  /******* TESTING SUPABASE *******/
+  // Add this useEffect to test Supabase connection
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        console.log('Fetching from Supabase...');
+
+        // Fetch all locations
+        const { data, error } = await supabase.from('locations').select('*');
+
+        if (error) {
+          console.error('Supabase error:', error);
+          return;
+        }
+
+        console.log('✅ Supabase data:', data);
+      } catch (err) {
+        console.error('❌ Fetch error:', err);
+      }
+    }
+
+    fetchData();
+  }, []); // Run once on component mount
 
   async function getCoordsByName(city) {
     const res = await fetch(
