@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback } from 'react';
 import WeatherCardsList from '@/components/weather-cards-list';
 import WeatherCardModal from '@/components/weather-card-modal';
 import useStore from '@/store/useWeatherStore';
-import { supabase } from '@/utils/supabase/client';
 
 const debug = true;
 
@@ -21,41 +20,6 @@ export default function Weather() {
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
-
-  /******* TESTING SUPABASE *******/
-  const [supabaseData, setSupabaseData] = useState([]);
-  const [userSavedLocations, setUserSavedLocations] = useState([]);
-
-  // Add this useEffect to test Supabase connection
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        console.log('Fetching from Supabase...');
-
-        // Fetch all locations
-        const { data, error } = await supabase.from('locations').select('*');
-        const { userData, userDataError } = await supabase.from('user_saved_locations').select('*');
-
-        if (error) {
-          console.error('Supabase error:', error);
-          return;
-        }
-        if (userDataError) {
-          console.error('Supabase error fetching from user_saved_locations:', userDataError);
-          return;
-        }
-
-        console.log('✅ Supabase data:', data);
-        console.log('✅ User data:', userData);
-        setSupabaseData(data);
-        setUserSavedLocations(userData);
-      } catch (err) {
-        console.error('❌ Fetch error:', err);
-      }
-    }
-
-    fetchData();
-  }, []); // Run once on component mount
 
   async function getCoordsByName(city) {
     const res = await fetch(
