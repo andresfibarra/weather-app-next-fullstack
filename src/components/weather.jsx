@@ -23,6 +23,9 @@ export default function Weather() {
   const [selectedId, setSelectedId] = useState(null);
 
   /******* TESTING SUPABASE *******/
+  const [supabaseData, setSupabaseData] = useState([]);
+  const [userSavedLocations, setUserSavedLocations] = useState([]);
+
   // Add this useEffect to test Supabase connection
   useEffect(() => {
     async function fetchData() {
@@ -31,13 +34,21 @@ export default function Weather() {
 
         // Fetch all locations
         const { data, error } = await supabase.from('locations').select('*');
+        const { userData, userDataError } = await supabase.from('user_saved_locations').select('*');
 
         if (error) {
           console.error('Supabase error:', error);
           return;
         }
+        if (userDataError) {
+          console.error('Supabase error fetching from user_saved_locations:', userDataError);
+          return;
+        }
 
         console.log('✅ Supabase data:', data);
+        console.log('✅ User data:', userData);
+        setSupabaseData(data);
+        setUserSavedLocations(userData);
       } catch (err) {
         console.error('❌ Fetch error:', err);
       }
