@@ -2,4 +2,5 @@
 // in /api/locations/[id]/route.js
 /*
 1. Remove from user_saved_locations
+2. do I cascade down the other id's?
 */

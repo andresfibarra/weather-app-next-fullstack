@@ -22,7 +22,7 @@ export default function Weather() {
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
 
-  // TESTER FOR GET API ROUTE
+  // TESTER FOR  API ROUTES
   useEffect(() => {
     async function fetchLocations() {
       try {
@@ -35,6 +35,28 @@ export default function Weather() {
         const data = await res.json();
 
         console.log('API Response:', data);
+      } catch (err) {
+        console.error(err);
+        setError(err.message || 'Something went wrong.');
+      }
+
+      try {
+        console.log('POSTing to API');
+        const res = await fetch('/api/locations', {
+          method: 'POST',
+          body: JSON.stringify({
+            userId: '550e8400-e29b-41d4-a716-446655440000',
+            location: 'Mexico City',
+            state_code: 'DF',
+            country_code: 'MX',
+            timezone_abbreviation: 'CST',
+            latitude: 19.4326,
+            longitude: -99.1332,
+          }),
+        });
+        console.log('POST Response:', res);
+        const data = await res.json();
+        console.log('POST API Response:', data);
       } catch (err) {
         console.error(err);
         setError(err.message || 'Something went wrong.');
@@ -84,10 +106,6 @@ export default function Weather() {
   }, []);
 
   const selectedWeather = useStore.getState().getCityWeatherById(selectedId);
-  if (debug) {
-    console.log('citiesWeather:', citiesWeather);
-    console.log('SelectedWeather:', selectedWeather);
-  }
 
   const handleCloseCardDetails = useCallback(() => {
     if (debug) console.log('close!');
