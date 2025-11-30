@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/utils/supabase/client';
 
 const debug = true;
+const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 // GET request to fetch all locations from the database
 export async function GET(request) {
@@ -16,108 +17,113 @@ export async function GET(request) {
 
 // POST request to add a new location to the database
 export async function POST(request) {
-  if (debug) console.log('POST request received');
+  if (debug) console.log('POST /api/locations received');
+
   // get body data
   const res = await request.json();
-  if (debug) console.log('And here is res', res);
+  if (debug) console.log('Response body:', res);
 
-  // check if location exists in table
+  const { location, state_code, country_code, timezone_abbreviation, latitude, longitude } = res;
+
+  // 1. Find existing location (0 or 1 row)
   let { data: locationData, error: locationError } = await supabase
     .from('locations')
     .select('*')
-    .eq('location', res.location)
-    .eq('state_code', res.state_code)
-    .eq('country_code', res.country_code)
+    .eq('location', location)
+    .eq('state_code', state_code)
+    .eq('country_code', country_code)
     .maybeSingle();
 
   if (locationError) {
-    return NextResponse.json({ error: locationError.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: locationError.message }, { status: 500 });
   }
   if (debug) console.log(`Here is locationData`, locationData); // should be zero for now
 
-  // if doesn't exist, create
-  if (locationData.length === 0) {
+  // 2. If location doesn't exist, create
+  if (!locationData) {
     if (debug) console.log(`Location does not exist, creating...`);
+
     ({ data: locationData, error: locationError } = await supabase
       .from('locations')
       .insert({
-        location: res.location,
-        state_code: res.state_code,
-        country_code: res.country_code,
-        timezone_abbreviation: res.timezone_abbreviation,
-        latitude: res.latitude,
-        longitude: res.longitude,
+        location,
+        state_code,
+        country_code,
+        timezone_abbreviation,
+        latitude,
+        longitude,
       })
-      .select()
-      .maybeSingle());
+      .select('*')
+      .single());
 
-    if (locationError) {
+    if (locationError || !locationData) {
       return NextResponse.json({ error: locationError.message }, { status: 500 });
     }
   }
-  if (debug) console.log(`Here is locationData`, locationData);
-  console.log(`locationData.id`, locationData.id);
 
-  // check for duplicates in user_saved_locations
+  if (debug) console.log(`Final locationData`, locationData);
+
+  // 3. check for duplicates in user_saved_locations
   const { data: userSavedLocationsData, error: userSavedLocationsError } = await supabase
     .from('user_saved_locations')
-    .select('*, locations(state_code, country_code)')
-    .eq('user_id', `550e8400-e29b-41d4-a716-446655440000`)
+    .select('*')
+    .eq('user_id', HARDCODED_USER_ID)
     .eq('location_id', locationData.id)
-    .eq('locations.state_code', locationData.state_code)
-    .eq('locations.country_code', locationData.country_code)
     .maybeSingle();
 
-  if (debug) console.log(`Here is userSavedLocationsData`, userSavedLocationsData);
+  if (userSavedLocationsError) {
+    return NextResponse.json(
+      { success: false, error: userSavedLocationsError.message },
+      { status: 500 },
+    );
+  }
 
-  // add to user_saved locations if not a duplicated
-  if (!userSavedLocationsData) {
-    const { data, error } = await supabase
-      .from('user_saved_locations')
-      .insert({
-        user_id: `550e8400-e29b-41d4-a716-446655440000`,
-        location_id: locationData.id,
-      })
-      .select()
-      .single();
-
-    if (debug) console.log(`Here is data inserted to user locations`, data);
-
-    if (error) {
-      if (debug) console.log(`Here is error`, error);
-      return NextResponse.json(
-        {
-          success: false,
-          error: error.message,
-        },
-        { status: 500 },
-      );
-    }
-
-    console.log(`data`, data);
-
+  // 4. If already saved, return duplicate response
+  if (userSavedLocationsData) {
+    if (debug) console.log(`Location already exists in user locations`);
     return NextResponse.json(
       {
-        success: true,
+        success: false,
+        error: 'Location already exists in user locations',
         locationId: locationData.id,
-        message: 'Location saved successfully',
       },
       {
-        status: 200,
+        status: 409,
       },
     );
   }
-  // if location already exists in user locations
-  if (debug) console.log(`Location already exists in user locations`);
+
+  // 5. Insert into to user_saved locations if not a duplicate
+  const { insertUserLocation, insertUserLocationError } = await supabase
+    .from('user_saved_locations')
+    .insert({
+      user_id: HARDCODED_USER_ID,
+      location_id: locationData.id,
+    })
+    .select('location_id')
+    .single();
+
+  if (insertUserLocationError) {
+    if (debug) console.error(`Error inserting into user_saved_locations`, insertUserLocationError);
+    return NextResponse.json(
+      {
+        success: false,
+        error: insertUserLocationError.message,
+      },
+      { status: 500 },
+    );
+  }
+
+  if (debug) console.log(`Inserted user location data`, insertUserLocation);
 
   return NextResponse.json(
     {
-      success: false,
-      error: 'Location already exists in user locations',
+      success: true,
       locationId: locationData.id,
+      message: 'Location saved successfully',
     },
     {
-      status: 409,
+      status: 200,
     },
   );
 }
