@@ -1,7 +1,7 @@
 // src/components/Weather.jsx
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import WeatherCardsList from '@/components/weather-cards-list';
 import WeatherCardModal from '@/components/weather-card-modal';
 import useStore from '@/store/useWeatherStore';
@@ -21,6 +21,27 @@ export default function Weather() {
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
+
+  // TESTER FOR GET API ROUTE
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const res = await fetch('/api/locations');
+        console.log('Response:', res);
+
+        if (!res.ok) {
+          throw new Error(`GET request failed with status: ${res.status}`);
+        }
+        const data = await res.json();
+
+        console.log(`API Response: ${data}`);
+      } catch (err) {
+        console.error(err);
+        setError(err.message || 'Something went wrong.');
+      }
+    }
+    fetchLocations();
+  }, []);
 
   async function getWeather(input) {
     if (!input) return;
