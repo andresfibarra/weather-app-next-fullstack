@@ -26,7 +26,7 @@ export default function Weather() {
   useEffect(() => {
     async function fetchLocations() {
       try {
-        const res = await fetch('/api/locations');
+        const res = await fetch('/api/locations', { method: 'GET', cache: 'no-store' });
         console.log('Response:', res);
 
         if (!res.ok) {
@@ -34,7 +34,7 @@ export default function Weather() {
         }
         const data = await res.json();
 
-        console.log(`API Response: ${data}`);
+        console.log('API Response:', data);
       } catch (err) {
         console.error(err);
         setError(err.message || 'Something went wrong.');
