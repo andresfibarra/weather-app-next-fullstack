@@ -35,14 +35,14 @@ const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
  * }
  */
 export async function GET(request) {
-  const { data, error } = await supabase
+  const { data: selectData, error: selectError } = await supabase
     .from('user_saved_locations')
     .select('*')
     .eq('user_id', HARDCODED_USER_ID);
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (selectError) {
+    return NextResponse.json({ error: selectError.message }, { status: 500 });
   }
-  return NextResponse.json(data, { status: 200 });
+  return NextResponse.json(selectData, { status: 200 });
 }
 
 /**
@@ -115,10 +115,11 @@ export async function POST(request) {
   const res = await request.json();
   if (debug) console.log('Response body:', res);
 
-  const { location, state_code, country_code, timezone_abbreviation, latitude, longitude } = res;
+  const { userId, location, state_code, country_code, timezone_abbreviation, latitude, longitude } =
+    res;
 
   if (
-    !userId ||
+    !userId || // remove once authentication is implemented
     !location ||
     !state_code ||
     !country_code ||
@@ -178,7 +179,7 @@ export async function POST(request) {
   const { data: userSavedLocationsData, error: userSavedLocationsError } = await supabase
     .from('user_saved_locations')
     .select('*')
-    .eq('user_id', HARDCODED_USER_ID)
+    .eq('user_id', userId)
     .eq('location_id', locationData.id)
     .maybeSingle();
 
@@ -209,7 +210,7 @@ export async function POST(request) {
   const { data: maxDisplayOrderData, error: maxDisplayOrderError } = await supabase
     .from('user_saved_locations')
     .select('display_order')
-    .eq('user_id', HARDCODED_USER_ID)
+    .eq('user_id', userId)
     .order('display_order', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -237,7 +238,7 @@ export async function POST(request) {
   const { data: insertUserLocation, error: insertUserLocationError } = await supabase
     .from('user_saved_locations')
     .insert({
-      user_id: HARDCODED_USER_ID,
+      user_id: userId,
       location_id: locationData.id,
       display_order: nextDisplayOrder,
     })

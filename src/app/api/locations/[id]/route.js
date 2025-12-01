@@ -5,7 +5,6 @@ import { supabase } from '@/utils/supabase/client';
 
 const debug = true;
 
-// DELETE request to delete a location from the user's saved lists
 /**
  * DELETE /api/locations/[id]
  *
@@ -111,14 +110,15 @@ export async function DELETE(request, { params }) {
   if (debug) console.log('display_order:', display_order);
 
   // 4. Delete record from user_saved_locations
-  const { error } = await supabase
+  const { data: deleteResult, error: deleteError } = await supabase
     .from('user_saved_locations')
     .delete()
     .eq('user_id', user_id)
     .eq('location_id', id);
+  console.log('deleteResult:', deleteResult);
 
-  if (error) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  if (deleteError) {
+    return NextResponse.json({ success: false, error: deleteError.message }, { status: 500 });
   }
 
   // 5. Reorder remaining locations
