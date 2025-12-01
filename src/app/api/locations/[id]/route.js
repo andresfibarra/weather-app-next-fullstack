@@ -122,6 +122,15 @@ export async function DELETE(request, { params }) {
   }
 
   // 5. Reorder remaining locations
+  const { data: reorderData, error: reorderError } = await supabase.rpc('decrement_display_order', {
+    uid: user_id,
+    threshold: display_order,
+  });
+
+  if (reorderError) {
+    console.error('Error decerementing display_order:', reorderError.message);
+    return NextResponse.json({ success: false, error: reorderError.message }, { status: 500 });
+  }
 
   // 6. Return success response
   return NextResponse.json(
