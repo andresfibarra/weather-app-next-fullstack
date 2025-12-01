@@ -3,15 +3,16 @@ const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 async function testGETEndpoint() {
   try {
+    if (debug) console.log('Testing GET endpoint');
     const res = await fetch('/api/locations', { method: 'GET', cache: 'no-store' });
-    console.log('Response:', res);
+    if (debug) console.log('Response:', res);
 
     if (!res.ok) {
       throw new Error(`GET request failed with status: ${res.status}`);
     }
     const data = await res.json();
 
-    console.log('API Response:', data);
+    if (debug) console.log('API Response:', data);
   } catch (err) {
     console.error(err);
     setError(err.message || 'Something went wrong.');
@@ -64,6 +65,7 @@ async function testDELETEEndpoint(locationId) {
 }
 
 export async function testEndpoints() {
+  console.log('--------------------------------');
   await testGETEndpoint();
   const locationId = await testPOSTEndpoint();
   await testDELETEEndpoint(locationId);

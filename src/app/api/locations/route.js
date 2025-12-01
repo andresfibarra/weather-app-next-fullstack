@@ -7,8 +7,38 @@ const debug = true;
 const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 // GET request to fetch all locations from the database
+/**
+ * GET /api/locations
+ *
+ * Fetches all locations for the hardcoded user ID
+ *
+ * @param request - The incoming HTTP request
+ * @returns - JSON response containing array of user_saved_locations
+ *
+ * @example
+ * // Request
+ * GET /api/locations
+ *
+ * // Success Response (200)
+ * [
+ * {
+ *   id: "...",
+ *   user_id: "...",
+ *   location_id: "...",
+ *   display_order: 1
+ *   saved_at: "2025-11-26T05:33:57.086575+00:00"
+ * }]
+ *
+ * // Error response (500)
+ * {
+ *   error: "Error message"
+ * }
+ */
 export async function GET(request) {
-  const { data, error } = await supabase.from('user_saved_locations').select('*');
+  const { data, error } = await supabase
+    .from('user_saved_locations')
+    .select('*')
+    .eq('user_id', HARDCODED_USER_ID);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
