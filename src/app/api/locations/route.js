@@ -6,7 +6,6 @@ import { supabase } from '@/utils/supabase/client';
 const debug = true;
 const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
-// GET request to fetch all locations from the database
 /**
  * GET /api/locations
  *
@@ -16,7 +15,8 @@ const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
  * @returns - JSON response containing array of user_saved_locations
  *
  * @example
- * // Request
+ * Request Body: None
+ *
  * GET /api/locations
  *
  * // Success Response (200)
@@ -45,7 +45,69 @@ export async function GET(request) {
   return NextResponse.json(data, { status: 200 });
 }
 
-// POST request to add a new location to the database
+/**
+ * POST /api/locations
+ *
+ * Adds a new location to the user's saved locations
+ *
+ * Flow:
+ * 1. Check if location exists in locations table, creates if not
+ * 2. Check if location is already saved by the user
+ * 3. Calculate next display_order for the user
+ * 4. Insert into user_saved_locations with the new display_order
+ * @param request - HTTP request containing location data
+ * @param request.body - Request body
+ * @param request.body.userId - user ID of the user saving the location
+ * @param request.body.location - Location name
+ * @param request.body.state_code - State code
+ * @param request.body.country_code - Country code
+ * @param request.body.timezone_abbreviation - Timezone abbreviation
+ * @param request.body.latitude - Latitude
+ * @param request.body.longitude - Longitude
+ *
+ * @returns - JSON response containing success, locationId, displayOrder, message
+ *
+ * @example
+ * Request Body:
+ * {
+ *   userId: "...",
+ *   location: "New York",
+ *   state_code: "NY",
+ *   country_code: "US",
+ *   timezone_abbreviation: "EST",
+ *   latitude: 40.7128,
+ *   longitude: -74.0060
+ * }
+ *
+ * // Success Response (200)
+ * {
+ *   success: true,
+ *   locationId: "...",
+ *   displayOrder: 1,
+ *   message: "Location saved successfully"
+ * }
+ *
+ * // Error Response (500)
+ * {
+ *   success: false,
+ *   error: "Error message"
+ * }
+ *
+ * // Error Response (409)
+ * {
+ *   success: false,
+ *   error: "Location already exists in user locations",
+ *   locationId: "...",
+ *   displayOrder: 1
+ * }
+ *
+ * // Error Response (400)
+ * {
+ *   success: false,
+ *   error: "Invalid request body",
+ *   message: "Missing required fields"
+ * }
+ */
 export async function POST(request) {
   if (debug) console.log('POST /api/locations received');
 
@@ -54,6 +116,25 @@ export async function POST(request) {
   if (debug) console.log('Response body:', res);
 
   const { location, state_code, country_code, timezone_abbreviation, latitude, longitude } = res;
+
+  if (
+    !userId ||
+    !location ||
+    !state_code ||
+    !country_code ||
+    !timezone_abbreviation ||
+    !latitude ||
+    !longitude
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Invalid request body',
+        message: 'Missing required fields',
+      },
+      { status: 400 },
+    );
+  }
 
   // 1. Find existing location (0 or 1 row)
   let { data: locationData, error: locationError } = await supabase
