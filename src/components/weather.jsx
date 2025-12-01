@@ -25,7 +25,6 @@ export default function Weather() {
   const [selectedId, setSelectedId] = useState(null);
 
   // TESTER FOR  API ROUTES
-
   useEffect(() => {
     testEndpoints();
   }, []);
