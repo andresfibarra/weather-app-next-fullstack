@@ -4,6 +4,7 @@ const OPENWEATHER_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
 const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_KEY;
 
 const debug = true;
+const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 export async function getCoordsByName(city) {
   const res = await fetch(
@@ -62,14 +63,37 @@ export async function getLocationCodes(coordsArray) {
   return locationDataObj;
 }
 
-export function handleAddCity(newObj) {
+export async function handleAddCity(newObj) {
   const addCityWeather = useStore.getState().addCityWeather;
 
   const added = addCityWeather(newObj);
 
   if (!added) {
     if (debug) console.log(`Skipping duplicate: ${newObj.location}`);
-    setError(`Weather for ${newObj.location} already being shown`);
+    throw new Error('ERROR ADDING CITY');
+  }
+
+  // connect to api route
+  try {
+    console.log('POSTing to API');
+    console.log('newObj:', newObj);
+    const res = await fetch('/api/locations', {
+      method: 'POST',
+      body: JSON.stringify({
+        userId: HARDCODED_USER_ID,
+        location: newObj.location,
+        state_code: newObj.state_code,
+        country_code: newObj.country_code,
+        timezone_abbreviation: newObj.time_zone_abbreviation,
+        latitude: newObj.lat,
+        longitude: newObj.lon,
+      }),
+    });
+    console.log('POST Response:', res);
+    const data = await res.json();
+    console.log('POST API Response:', data);
+  } catch (err) {
+    console.error(err);
     throw new Error('ERROR ADDING CITY');
   }
 }
