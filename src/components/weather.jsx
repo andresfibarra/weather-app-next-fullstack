@@ -58,6 +58,7 @@ export default function Weather() {
 
   const handleRemoveCard = useCallback(
     (id) => {
+      // note: this uses the uuid of the city card, not the locationId from database
       if (debug) console.log(`Removing card with ID ${id}`);
       deleteCityById(id);
     },

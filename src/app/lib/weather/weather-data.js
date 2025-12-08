@@ -89,13 +89,14 @@ export async function handleAddCity(newObj) {
         longitude: newObj.lon,
       }),
     });
-    console.log('POST Response:', res);
+    if (debug) console.log('POST Response:', res);
     const data = await res.json();
-    console.log('POST API Response:', data);
+    if (debug) console.log('POST API Response:', data);
   } catch (err) {
-    console.error(err);
     throw new Error('ERROR ADDING CITY');
   }
+
+  // Store the returned locationId and display_order in weather object
 }
 
 /***** IDEA:  */
