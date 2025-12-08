@@ -23,6 +23,8 @@ const useStore = create(
           // STATE
           // -----------------------------
           citiesWeather: [],
+          loading: false,
+          error: '',
 
           // -----------------------------
           // Replace entire citiesWeather array
@@ -68,7 +70,7 @@ const useStore = create(
           },
 
           // -----------------------------
-          // Delete city card by ID
+          // Delete city card in store by its card UUID
           // -----------------------------
           deleteCityById: (id) => {
             // use Immer to mutate
@@ -85,6 +87,24 @@ const useStore = create(
             const cities = get().citiesWeather;
             const list = Array.isArray(cities) ? cities : [];
             return list.find((c) => c.id === id) || null;
+          },
+
+          // -----------------------------
+          // Set loading state
+          // -----------------------------
+          setLoading: (loadingState) => {
+            set((draftState) => {
+              draftState.isLoading = loadingState;
+            });
+          },
+
+          // -----------------------------
+          // Set error state
+          // -----------------------------
+          setError: (error) => {
+            set((draftState) => {
+              draftState.error = error;
+            });
           },
         };
       }),

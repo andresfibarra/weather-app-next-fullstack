@@ -16,11 +16,13 @@ const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_KEY;
 
 export default function Weather() {
   const citiesWeather = useStore((state) => state.citiesWeather);
-  const addCityWeather = useStore((state) => state.addCityWeather);
   const deleteCityById = useStore((state) => state.deleteCityById);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const loading = useStore((state) => state.loading);
+  const error = useStore((state) => state.error);
+  const setLoading = useStore((state) => state.setLoading);
+  const setError = useStore((state) => state.setError);
+
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
 
@@ -57,10 +59,9 @@ export default function Weather() {
   }
 
   const handleRemoveCard = useCallback(
-    (id) => {
-      // note: this uses the uuid of the city card, not the locationId from database
-      if (debug) console.log(`Removing card with ID ${id}`);
-      deleteCityById(id);
+    (cardUuid) => {
+      if (debug) console.log(`Removing card with ID ${cardUuid}`);
+      deleteCityById(cardUuid);
     },
     [deleteCityById],
   );
