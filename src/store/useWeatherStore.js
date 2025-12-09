@@ -24,7 +24,7 @@ const useStore = create(
           // -----------------------------
           citiesWeather: [],
           loading: false,
-          error: '',
+          error: null, // { message: string }
 
           // -----------------------------
           // Replace entire citiesWeather array
@@ -101,9 +101,9 @@ const useStore = create(
           // -----------------------------
           // Set error state
           // -----------------------------
-          setError: (error) => {
+          setError: (errorMessage) => {
             set((draftState) => {
-              draftState.error = error;
+              draftState.error = { message: errorMessage };
             });
           },
         };

@@ -28,7 +28,8 @@ export default function Weather() {
 
   // TESTER FOR  API ROUTES
   useEffect(() => {
-    testEndpoints();
+    setError(null); // for now
+    // testEndpoints();
   }, []);
 
   async function getWeather(input) {
@@ -36,7 +37,7 @@ export default function Weather() {
 
     try {
       setLoading(true);
-      setError('');
+      setError(null);
 
       const newObj = await fetchWeatherData(input);
 
@@ -96,7 +97,7 @@ export default function Weather() {
 
       {loading && <div className="mt-1 text-[0.9rem] text-sky-400">Loading weather...</div>}
 
-      {!loading && error && (
+      {!loading && error?.message && (
         <div
           className="
             mt-1
@@ -110,7 +111,7 @@ export default function Weather() {
             text-center
           "
         >
-          {error}
+          {error.message}
         </div>
       )}
 
