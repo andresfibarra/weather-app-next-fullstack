@@ -111,7 +111,7 @@ const useStore = create(
           // -----------------------------
           setLoading: (loadingState) => {
             set((draftState) => {
-              draftState.isLoading = loadingState;
+              draftState.loading = loadingState;
             });
           },
 

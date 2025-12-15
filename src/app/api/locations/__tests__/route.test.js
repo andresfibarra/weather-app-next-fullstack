@@ -42,7 +42,6 @@ async function testPOSTEndpoint() {
     locationId = data.locationId;
   } catch (err) {
     console.error(err);
-    console.log('POST API Response in catch clause:', data);
     setError(err.message || 'Something went wrong.');
   } finally {
     return locationId;
