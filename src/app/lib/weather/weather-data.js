@@ -209,15 +209,13 @@ export async function handleRemoveCity(cardUuid) {
       }),
     });
 
-    if (!res.ok) {
+    if (!res.ok && res.status !== 404) {
       const errorData = await res.json();
-      if (res.status !== 404) {
-        throw new Error(errorData.error || 'Failed to delete location from database');
-      } else {
-        // 404: Location not found in database --> keep deleted from store
-        console.log('404: Location not found in database. Keeping deleted from store.');
-        return;
-      }
+      throw new Error(errorData.error || 'Failed to delete location from database');
+    }
+    // 404: Location not found in database --> keep deleted from store
+    if (res.status === 404) {
+      console.log('404: Location not found in database. Keeping deleted from store.');
     }
 
     const data = await res.json();

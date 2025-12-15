@@ -86,7 +86,7 @@ export async function DELETE(request, { params }) {
     .from('user_saved_locations')
     .select('display_order')
     .eq('user_id', user_id)
-    .eq('location_id', id)
+    .eq('id', id)
     .maybeSingle(); // Only 1 row should exist
 
   if (!record) {
@@ -114,7 +114,7 @@ export async function DELETE(request, { params }) {
     .from('user_saved_locations')
     .delete()
     .eq('user_id', user_id)
-    .eq('location_id', id);
+    .eq('id', id);
   console.log('deleteResult:', deleteResult);
 
   if (deleteError) {
