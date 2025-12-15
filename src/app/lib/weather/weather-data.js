@@ -68,6 +68,9 @@ export async function getLocationCodes(coordsArray) {
 
 export async function handleAddCity(newObj) {
   const addCityWeather = useStore.getState().addCityWeather;
+  const updateCityWeather = useStore.getState().updateCityWeather;
+  const deleteCityById = useStore.getState().deleteCityById;
+  const setError = useStore.getState().setError;
 
   // Optimistic update to store
   const added = addCityWeather(newObj);
@@ -99,9 +102,15 @@ export async function handleAddCity(newObj) {
       console.log('POST API Response:', data);
     }
 
+    if (!res.ok && res.status !== 409) {
+      // non-duplicate error --> rollback optimistic update
+      deleteCityById(newObj.id); // remove from store
+      setError(data.error || 'Failed to save location');
+      throw new Error(data.error || 'Failed to save location');
+    }
+
     // update weather object with saved_location_id and display_order
     if (res.status === 200) {
-      const updateCityWeather = useStore.getState().updateCityWeather;
       updateCityWeather(newObj.id, {
         locationId: data.locationId,
         display_order: data.displayOrder,
