@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import WeatherCardsList from '@/components/weather-cards-list';
 import WeatherCardModal from '@/components/weather-card-modal';
 import useStore from '@/store/useWeatherStore';
-import { handleAddCity, fetchWeatherData } from '@/app/lib/weather/weather-data';
+import { handleAddCity, handleRemoveCity, fetchWeatherData } from '@/app/lib/weather/weather-data';
 
 // TESTING
 import { testEndpoints } from '@/app/api/locations/__tests__/route.test';
@@ -16,7 +16,6 @@ const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_KEY;
 
 export default function Weather() {
   const citiesWeather = useStore((state) => state.citiesWeather);
-  const deleteCityById = useStore((state) => state.deleteCityById);
 
   const loading = useStore((state) => state.loading);
   const error = useStore((state) => state.error);
@@ -25,12 +24,6 @@ export default function Weather() {
 
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
-
-  // TESTER FOR  API ROUTES
-  useEffect(() => {
-    setError(null); // for now
-    // testEndpoints();
-  }, []);
 
   async function getWeather(input) {
     if (!input) return;
@@ -41,7 +34,7 @@ export default function Weather() {
 
       const newObj = await fetchWeatherData(input);
 
-      handleAddCity(newObj);
+      await handleAddCity(newObj);
       setQuery('');
 
       if (debug) console.log(newObj);
@@ -59,13 +52,14 @@ export default function Weather() {
     }
   }
 
-  const handleRemoveCard = useCallback(
-    (cardUuid) => {
-      if (debug) console.log(`Removing card with ID ${cardUuid}`);
-      deleteCityById(cardUuid);
-    },
-    [deleteCityById],
-  );
+  const handleRemoveCard = useCallback(async (cardUuid) => {
+    if (debug) console.log(`Removing card with ID ${cardUuid}`);
+    try {
+      await handleRemoveCity(cardUuid);
+    } catch (err) {
+      console.error('Failed to remove card:', err);
+    }
+  }, []);
 
   const handleOpenCardDetails = useCallback((id = null) => {
     if (debug) console.log(`Open card! ID: ${id}`);

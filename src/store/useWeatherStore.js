@@ -9,7 +9,7 @@ import { immer } from 'zustand/middleware/immer';
 // Devtools enabled for easier debugging.
 //
 // Structure: {
-//   citiesWeather: [ { id, location, user_saved_location_id, display_order, ... }, ... ],
+//   citiesWeather: [ { id, location, saved_location_id, display_order, ... }, ... ],
 //   actions: { setCitiesWeather, addCityWeather, deleteCityById, getCityWeatherById, setLoading, setError }
 // }
 // -----------------------------
@@ -89,7 +89,7 @@ const useStore = create(
           },
 
           // -----------------------------
-          // Update city weather by ID
+          // Update city weather by uuid
           // -----------------------------
           updateCityWeather: (id, updatedData) => {
             set(
@@ -97,6 +97,9 @@ const useStore = create(
                 const city = draftState.citiesWeather.find((c) => c.id === id);
                 if (!city) return;
 
+                if (!updatedData) {
+                  return;
+                }
                 for (const key in updatedData) {
                   city[key] = updatedData[key];
                 }

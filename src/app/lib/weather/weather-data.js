@@ -86,6 +86,9 @@ export async function handleAddCity(newObj) {
     console.log('newObj:', newObj);
     const res = await fetch('/api/locations', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         userId: HARDCODED_USER_ID,
         location: newObj.location,
@@ -112,7 +115,14 @@ export async function handleAddCity(newObj) {
     // update weather object with saved_location_id and display_order
     if (res.status === 200) {
       updateCityWeather(newObj.id, {
-        locationId: data.locationId,
+        saved_location_id: data.location_id,
+        display_order: data.displayOrder,
+      });
+    } else if (res.status === 409) {
+      if (debug)
+        console.log('409: Location already exists. Updating saved_location_id and display_order');
+      updateCityWeather(newObj.id, {
+        saved_location_id: data.location_id,
         display_order: data.displayOrder,
       });
     }
@@ -162,4 +172,62 @@ export async function fetchWeatherData(input) {
   };
 
   return newObj;
+}
+
+export async function handleRemoveCity(cardUuid) {
+  const deleteCityById = useStore.getState().deleteCityById;
+  const getCityWeatherById = useStore.getState().getCityWeatherById;
+  const setError = useStore.getState().setError;
+
+  // 1. get card to access required field
+  const weatherObj = getCityWeatherById(cardUuid);
+
+  if (!weatherObj) {
+    if (debug) console.log('City not found for removal. Skipping removal. Uuid:', cardUuid);
+    return;
+  }
+
+  // if no saved_location_id, it wasn't saved yet --> just delete from store
+  if (!weatherObj.saved_location_id) {
+    if (debug) console.log('City not saved to database. Skipping db removal. Uuid:', cardUuid);
+    deleteCityById(cardUuid);
+    return;
+  }
+
+  // optimistic delete from store
+  deleteCityById(cardUuid);
+
+  // Delete from database
+  try {
+    const res = await fetch(`/api/locations/${weatherObj.saved_location_id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: HARDCODED_USER_ID,
+      }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      if (res.status !== 404) {
+        throw new Error(errorData.error || 'Failed to delete location from database');
+      } else {
+        // 404: Location not found in database --> keep deleted from store
+        console.log('404: Location not found in database. Keeping deleted from store.');
+        return;
+      }
+    }
+
+    const data = await res.json();
+    if (debug) console.log('DELETE API Response:', data);
+  } catch (err) {
+    if (debug) console.error('Failed to remove location from database', err);
+
+    // rollback optimistic update
+    await handleAddCity(weatherObj);
+    setError(errorData.error || 'Failed to remove location from database');
+    throw err;
+  }
 }

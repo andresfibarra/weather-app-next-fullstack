@@ -39,7 +39,7 @@ async function testPOSTEndpoint() {
     console.log('POST Response:', res);
     const data = await res.json();
     console.log('POST API Response:', data);
-    locationId = data.locationId;
+    locationId = data.location_id;
   } catch (err) {
     console.error(err);
     setError(err.message || 'Something went wrong.');

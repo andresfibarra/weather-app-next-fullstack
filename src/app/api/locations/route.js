@@ -67,7 +67,7 @@ export async function GET(request) {
  * @param request.body.latitude - Latitude
  * @param request.body.longitude - Longitude
  *
- * @returns - JSON response containing success, locationId, displayOrder, message
+ * @returns - JSON response containing success, location_id, displayOrder, message
  *
  * @example
  * Request Body:
@@ -84,7 +84,7 @@ export async function GET(request) {
  * // Success Response (200)
  * {
  *   success: true,
- *   locationId: "...", // user_saved_locations.id
+ *   location_id: "...", // user_saved_locations.id
  *   displayOrder: ...,
  *   message: "Location saved successfully"
  * }
@@ -99,7 +99,7 @@ export async function GET(request) {
  * {
  *   success: false,
  *   error: "Location already exists in user locations",
- *   locationId: "...", // user_saved_locations.id
+ *   location_id: "...", // user_saved_locations.id
  *   displayOrder: ...
  * }
  *
@@ -201,7 +201,7 @@ export async function POST(request) {
       {
         success: false,
         error: 'Location already exists in user locations',
-        locationId: userSavedLocationsData.id,
+        location_id: userSavedLocationsData.id,
         displayOrder: userSavedLocationsData.display_order,
       },
       {
@@ -266,7 +266,7 @@ export async function POST(request) {
   return NextResponse.json(
     {
       success: true,
-      locationId: insertUserLocation.id,
+      location_id: insertUserLocation.id,
       displayOrder: insertUserLocation.display_order,
       message: 'Location saved successfully',
     },
