@@ -54,11 +54,14 @@ export async function getLocationCodes(coordsArray) {
   }
 
   const locationData = await res.json();
+  if (debug) console.log('locationData:', locationData);
   const locationDataObj = {
     state_code: locationData.features[0].properties.state_code,
     country_code: locationData.features[0].properties.country_code.toUpperCase(),
     time_zone_abbreviation: locationData.features[0].properties.timezone.abbreviation_STD,
   };
+
+  if (debug) console.log('locationDataObj:', locationDataObj);
 
   return locationDataObj;
 }
@@ -66,6 +69,7 @@ export async function getLocationCodes(coordsArray) {
 export async function handleAddCity(newObj) {
   const addCityWeather = useStore.getState().addCityWeather;
 
+  // Optimistic update to store
   const added = addCityWeather(newObj);
 
   if (!added) {
@@ -89,19 +93,25 @@ export async function handleAddCity(newObj) {
         longitude: newObj.lon,
       }),
     });
-    if (debug) console.log('POST Response:', res);
     const data = await res.json();
-    if (debug) console.log('POST API Response:', data);
+    if (debug) {
+      console.log('POST Response:', res);
+      console.log('POST API Response:', data);
+    }
+
+    // update weather object with saved_location_id and display_order
+    if (res.status === 200) {
+      const updateCityWeather = useStore.getState().updateCityWeather;
+      updateCityWeather(newObj.id, {
+        locationId: data.locationId,
+        display_order: data.displayOrder,
+      });
+    }
   } catch (err) {
+    if (debug) console.log('ERROR ADDING CITY:', err);
     throw new Error('ERROR ADDING CITY');
   }
-
-  // Store the returned locationId and display_order in weather object
 }
-
-/***** IDEA:  */
-// ui state orchestration? Wrap lib functions with setLoading, setError, etc?
-/***** END IDEA */
 
 export async function fetchWeatherData(input) {
   // 1. create coordsArray
@@ -138,13 +148,9 @@ export async function fetchWeatherData(input) {
     time_zone_abbreviation: locationCodes.time_zone_abbreviation,
     location: coordsArray[2],
     id: crypto.randomUUID(),
+    saved_location_id: null, // for syncing endpoints
+    display_order: null,
   };
 
   return newObj;
 }
-
-// export async function add city with sync(newObj)
-// 1. Add to supabase
-// 2. Add to zustand
-// 3. handle errors
-// 4. return result

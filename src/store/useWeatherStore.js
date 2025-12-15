@@ -9,8 +9,8 @@ import { immer } from 'zustand/middleware/immer';
 // Devtools enabled for easier debugging.
 //
 // Structure: {
-//   citiesWeather: [ { id, location, ... }, ... ],
-//   actions: { setCitiesWeather, addCityWeather, deleteCityById, getCityWeatherById }
+//   citiesWeather: [ { id, location, user_saved_location_id, display_order, ... }, ... ],
+//   actions: { setCitiesWeather, addCityWeather, deleteCityById, getCityWeatherById, setLoading, setError }
 // }
 // -----------------------------
 
@@ -56,7 +56,6 @@ const useStore = create(
             if (isDuplicate) {
               return false; // indicate NOT ADDED
             }
-
             // use Immer to mutate draft
             set(
               (draftState) => {
@@ -87,6 +86,24 @@ const useStore = create(
             const cities = get().citiesWeather;
             const list = Array.isArray(cities) ? cities : [];
             return list.find((c) => c.id === id) || null;
+          },
+
+          // -----------------------------
+          // Update city weather by ID
+          // -----------------------------
+          updateCityWeather: (id, updatedData) => {
+            set(
+              (draftState) => {
+                const city = draftState.citiesWeather.find((c) => c.id === id);
+                if (!city) return;
+
+                for (const key in updatedData) {
+                  city[key] = updatedData[key];
+                }
+              },
+              false,
+              'weather/updateCityWeather',
+            );
           },
 
           // -----------------------------

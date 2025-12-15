@@ -24,7 +24,7 @@ const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
  * {
  *   id: "...",
  *   user_id: "...",
- *   location_id: "...",
+ *   location_id: "...", // foreign key to locations table
  *   display_order: 1
  *   saved_at: "2025-11-26T05:33:57.086575+00:00"
  * }]
@@ -55,6 +55,8 @@ export async function GET(request) {
  * 2. Check if location is already saved by the user
  * 3. Calculate next display_order for the user
  * 4. Insert into user_saved_locations with the new display_order
+ * 5. Return success response
+ *
  * @param request - HTTP request containing location data
  * @param request.body - Request body
  * @param request.body.userId - user ID of the user saving the location
@@ -82,8 +84,8 @@ export async function GET(request) {
  * // Success Response (200)
  * {
  *   success: true,
- *   locationId: "...",
- *   displayOrder: 1,
+ *   locationId: "...", // user_saved_locations.id
+ *   displayOrder: ...,
  *   message: "Location saved successfully"
  * }
  *
@@ -97,8 +99,8 @@ export async function GET(request) {
  * {
  *   success: false,
  *   error: "Location already exists in user locations",
- *   locationId: "...",
- *   displayOrder: 1
+ *   locationId: "...", // user_saved_locations.id
+ *   displayOrder: ...
  * }
  *
  * // Error Response (400)
@@ -137,7 +139,7 @@ export async function POST(request) {
     );
   }
 
-  // 1. Find existing location (0 or 1 row)
+  // 1a. Check  locations table
   let { data: locationData, error: locationError } = await supabase
     .from('locations')
     .select('*')
@@ -151,7 +153,7 @@ export async function POST(request) {
   }
   if (debug) console.log(`Here is locationData`, locationData); // should be zero for now
 
-  // 2. If location doesn't exist, create
+  // 1b. If location doesn't exist, create
   if (!locationData) {
     if (debug) console.log(`Location does not exist, creating...`);
 
@@ -177,7 +179,7 @@ export async function POST(request) {
 
   if (debug) console.log(`Final locationData`, locationData);
 
-  // 3. check for duplicates in user_saved_locations
+  // 2. check for duplicates in user_saved_locations
   const { data: userSavedLocationsData, error: userSavedLocationsError } = await supabase
     .from('user_saved_locations')
     .select('*')
@@ -192,14 +194,14 @@ export async function POST(request) {
     );
   }
 
-  // 4. If already saved, return duplicate response
+  // 2b. If already saved, return duplicate response
   if (userSavedLocationsData) {
     if (debug) console.log(`Location already exists in user locations`);
     return NextResponse.json(
       {
         success: false,
         error: 'Location already exists in user locations',
-        locationId: locationData.id,
+        locationId: userSavedLocationsData.id,
         displayOrder: userSavedLocationsData.display_order,
       },
       {
@@ -208,7 +210,7 @@ export async function POST(request) {
     );
   }
 
-  // 5a. Get the maximum display_order for this user
+  // 3a. Get the maximum display_order for this user
   const { data: maxDisplayOrderData, error: maxDisplayOrderError } = await supabase
     .from('user_saved_locations')
     .select('display_order')
@@ -228,7 +230,7 @@ export async function POST(request) {
     );
   }
 
-  // Calculate the next display_order
+  // 3b.Calculate the next display_order
   // If no entries exist, maxOrderData will be null, so use 1
   // Otherwise, use max + 1
   const nextDisplayOrder = maxDisplayOrderData?.display_order
@@ -236,15 +238,15 @@ export async function POST(request) {
     : 1;
   if (debug) console.log(`Next display_order: ${nextDisplayOrder}`);
 
-  // 5b. Insert into to user_saved locations if not a duplicate
+  // 4. Insert into to user_saved locations if not a duplicate
   const { data: insertUserLocation, error: insertUserLocationError } = await supabase
     .from('user_saved_locations')
     .insert({
       user_id: userId,
-      location_id: locationData.id,
+      location_id: locationData.id, // for debugging purposes
       display_order: nextDisplayOrder,
     })
-    .select('location_id, display_order')
+    .select('id, location_id, display_order')
     .single();
 
   if (insertUserLocationError) {
@@ -260,10 +262,11 @@ export async function POST(request) {
 
   if (debug) console.log(`Inserted user location data`, insertUserLocation);
 
+  // 5. Return success response
   return NextResponse.json(
     {
       success: true,
-      locationId: insertUserLocation.location_id,
+      locationId: insertUserLocation.id,
       displayOrder: insertUserLocation.display_order,
       message: 'Location saved successfully',
     },
