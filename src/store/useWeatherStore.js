@@ -72,9 +72,23 @@ const useStore = create(
           // Delete city card in store by its card UUID
           // -----------------------------
           deleteCityById: (id) => {
-            // use Immer to mutate
+            const display_threshold = get().citiesWeather.find((c) => c.id === id)?.display_order;
+
+            // use Immer to mutate and remove the deleted city from the store
             set((draftState) => {
               draftState.citiesWeather = draftState.citiesWeather.filter((card) => card.id !== id);
+            });
+
+            // Reorder remaining locations in store
+            console.log('Reordering remaining locations in store...');
+            console.log('display_threshold:', display_threshold);
+            set((draftState) => {
+              draftState.citiesWeather = draftState.citiesWeather.map((city) => {
+                if (city.display_order > display_threshold) {
+                  city.display_order--;
+                  return city;
+                }
+              });
             });
           },
 
@@ -83,8 +97,10 @@ const useStore = create(
           // Returns the card or null if not found.
           // -----------------------------
           getCityWeatherById: (id) => {
+            if (!id) return null;
             const cities = get().citiesWeather;
             const list = Array.isArray(cities) ? cities : [];
+            if (!list) return null;
             return list.find((c) => c.id === id) || null;
           },
 
@@ -124,6 +140,15 @@ const useStore = create(
           setError: (errorMessage) => {
             set((draftState) => {
               draftState.error = { message: errorMessage };
+            });
+          },
+
+          // -----------------------------
+          // Clear all cities from store
+          // -----------------------------
+          clearAllCities: () => {
+            set((draftState) => {
+              draftState.citiesWeather = [];
             });
           },
         };

@@ -23,14 +23,18 @@ export default function WeatherCardsList({ onRemove, onExpand }) {
         animate-[fadeIn_0.3s_ease-in-out]
       "
     >
-      {citiesWeather.map((data) => (
-        <WeatherCard
-          key={data.id || data.name}
-          weather={data}
-          onRemove={onRemove}
-          onExpand={onExpand}
-        />
-      ))}
+      {citiesWeather.map((data) => {
+        console.log('data:', data);
+        if (!data) return null;
+        return (
+          <WeatherCard
+            key={data.id || data.name}
+            weather={data}
+            onRemove={onRemove}
+            onExpand={onExpand}
+          />
+        );
+      })}
     </div>
   );
 }

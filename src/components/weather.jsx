@@ -109,7 +109,7 @@ export default function Weather() {
         </div>
       )}
 
-      {citiesWeather && (
+      {citiesWeather && citiesWeather.length > 0 && (
         <WeatherCardsList onRemove={handleRemoveCard} onExpand={handleOpenCardDetails} />
       )}
     </div>

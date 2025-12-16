@@ -72,6 +72,8 @@ export async function handleAddCity(newObj) {
   const deleteCityById = useStore.getState().deleteCityById;
   const setError = useStore.getState().setError;
 
+  if (debug) console.log('newObj received by handleAddCity:', newObj);
+
   // Optimistic update to store
   const added = addCityWeather(newObj);
 
@@ -141,6 +143,8 @@ export async function fetchWeatherData(input) {
     coordsArray = await getCoordsByName(input);
   }
 
+  if (debug) console.log('coordsArray:', coordsArray);
+
   const res = await fetch(
     `https://api.openweathermap.org/data/3.0/onecall?lat=${coordsArray[0]}&lon=${coordsArray[1]}&units=imperial&appid=${OPENWEATHER_API_KEY}`,
   );
@@ -171,6 +175,8 @@ export async function fetchWeatherData(input) {
     display_order: null,
   };
 
+  if (debug) console.log('newObj to be returned by fetchWeatherData:', newObj);
+
   return newObj;
 }
 
@@ -194,10 +200,10 @@ export async function handleRemoveCity(cardUuid) {
     return;
   }
 
-  // optimistic delete from store
+  // 2. optimistic delete from store
   deleteCityById(cardUuid);
 
-  // Delete from database
+  // 3. Delete from database
   try {
     const res = await fetch(`/api/locations/${weatherObj.saved_location_id}`, {
       method: 'DELETE',
@@ -211,6 +217,7 @@ export async function handleRemoveCity(cardUuid) {
 
     if (!res.ok && res.status !== 404) {
       const errorData = await res.json();
+      setError(errorData.error || 'Failed to remove location from database');
       throw new Error(errorData.error || 'Failed to delete location from database');
     }
     // 404: Location not found in database --> keep deleted from store
@@ -223,9 +230,8 @@ export async function handleRemoveCity(cardUuid) {
   } catch (err) {
     if (debug) console.error('Failed to remove location from database', err);
 
-    // rollback optimistic update
+    // 6. rollback optimistic update if error
     await handleAddCity(weatherObj);
-    setError(errorData.error || 'Failed to remove location from database');
     throw err;
   }
 }

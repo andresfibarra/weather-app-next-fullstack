@@ -121,11 +121,13 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ success: false, error: deleteError.message }, { status: 500 });
   }
 
-  // 5. Reorder remaining locations
+  // 5. Reorder remaining locations in database
   const { data: reorderData, error: reorderError } = await supabase.rpc('decrement_display_order', {
     uid: user_id,
     threshold: display_order,
   });
+
+  if (debug) console.log('Reorder result:', reorderData);
 
   if (reorderError) {
     console.error('Error decerementing display_order:', reorderError.message);
