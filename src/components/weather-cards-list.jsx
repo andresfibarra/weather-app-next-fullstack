@@ -4,7 +4,7 @@ import React from 'react';
 import WeatherCard from './weather-card';
 import useStore from '../store/useWeatherStore';
 
-const debug = true;
+const debug = false;
 
 export default function WeatherCardsList({ onRemove, onExpand }) {
   const citiesWeather = useStore((state) => state.citiesWeather);

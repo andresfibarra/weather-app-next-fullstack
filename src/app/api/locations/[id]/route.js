@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/utils/supabase/client';
 
-const debug = true;
+const debug = false;
 
 /**
  * DELETE /api/locations/[id]

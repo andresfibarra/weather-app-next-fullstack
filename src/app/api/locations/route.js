@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/utils/supabase/client';
 
-const debug = true;
+const debug = false;
 const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 /**
@@ -37,7 +37,7 @@ const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 export async function GET(request) {
   const { data: selectData, error: selectError } = await supabase
     .from('user_saved_locations')
-    .select('*')
+    .select('*, locations(longitude, latitude)')
     .eq('user_id', HARDCODED_USER_ID);
   if (selectError) {
     return NextResponse.json({ error: selectError.message }, { status: 500 });
@@ -275,20 +275,9 @@ export async function POST(request) {
     },
   );
 }
-/*
-1. check if location exists in table
-2. if not, create
-3. add to user_saved_locations
-4. handle duplicate check (same user and location)
-*/
 
 // POST request /api/locations/[id]/reorder --> reorder saved locations
 /*
 Body: {userId, displayOrder }
 Returns: {success: true }
 */
-
-// export async function GET() {
-//   console.log('GET request received');
-//   return NextResponse.json({ ok: true });
-// }

@@ -3,7 +3,7 @@ import useStore from '@/store/useWeatherStore';
 const OPENWEATHER_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
 const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_KEY;
 
-const debug = true;
+const debug = false;
 const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 export async function getCoordsByName(city) {
@@ -135,6 +135,9 @@ export async function handleAddCity(newObj) {
 }
 
 export async function fetchWeatherData(input) {
+  if (!input) {
+    throw new Error('No input provided when fetching weather data.');
+  }
   // 1. create coordsArray
   let coordsArray;
   if (!Number.isNaN(parseInt(input, 10))) {

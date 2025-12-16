@@ -6,6 +6,7 @@ import WeatherCardsList from '@/components/weather-cards-list';
 import WeatherCardModal from '@/components/weather-card-modal';
 import useStore from '@/store/useWeatherStore';
 import { handleAddCity, handleRemoveCity, fetchWeatherData } from '@/app/lib/weather/weather-data';
+import { hydrateStoreFromSupabase } from '@/app/lib/weather/sync';
 
 // TESTING
 import { testEndpoints } from '@/app/api/locations/__tests__/route.test';
@@ -24,6 +25,12 @@ export default function Weather() {
 
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
+
+  // Hydrate store on mount
+  useEffect(() => {
+    if (debug) console.log('Hydrating store on mount');
+    hydrateStoreFromSupabase();
+  }, []);
 
   async function getWeather(input) {
     if (!input) return;
