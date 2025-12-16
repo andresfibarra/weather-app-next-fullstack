@@ -32,10 +32,11 @@ export default function Weather() {
       setLoading(true);
       setError(null);
 
+      setQuery('');
+
       const newObj = await fetchWeatherData(input);
 
       await handleAddCity(newObj);
-      setQuery('');
 
       if (debug) console.log(newObj);
     } catch (err) {

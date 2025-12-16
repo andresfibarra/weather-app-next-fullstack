@@ -4,12 +4,21 @@ import React from 'react';
 import WeatherCard from './weather-card';
 import useStore from '../store/useWeatherStore';
 
+const debug = true;
+
 export default function WeatherCardsList({ onRemove, onExpand }) {
   const citiesWeather = useStore((state) => state.citiesWeather);
 
   if (!citiesWeather || citiesWeather.length === 0) {
     return <div className="hint">Search for a city or zip code to get started!</div>;
   }
+
+  // Sort by display_order before rendering
+  const sortedCities = [...citiesWeather].sort(
+    (a, b) => (b.display_order || 0) - (a.display_order || 0),
+  );
+
+  if (debug) console.log('sortedCities:', sortedCities);
 
   return (
     <div
@@ -23,7 +32,7 @@ export default function WeatherCardsList({ onRemove, onExpand }) {
         animate-[fadeIn_0.3s_ease-in-out]
       "
     >
-      {citiesWeather.map((data) => {
+      {sortedCities.map((data) => {
         console.log('data:', data);
         if (!data) return null;
         return (
