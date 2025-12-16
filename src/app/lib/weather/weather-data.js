@@ -6,7 +6,13 @@ const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_KEY;
 const debug = false;
 const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
-export async function getCoordsByName(city) {
+/**
+ * Fetches coordinates from OpenWeather API given a city name
+ *
+ * @param city - City name
+ * @returns Array [lat, lon, locationName]
+ */
+async function getCoordsByName(city) {
   const res = await fetch(
     `https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${OPENWEATHER_API_KEY}`,
   );
@@ -22,7 +28,13 @@ export async function getCoordsByName(city) {
   return coordsArray;
 }
 
-export async function getCoordsByZip(zip) {
+/**
+ * Fetches coordinates from OpenWeather API given a zip code
+ *
+ * @param zip - Zip code
+ * @returns Array [lat, lon, locationName]
+ */
+async function getCoordsByZip(zip) {
   const res = await fetch(
     `https://api.openweathermap.org/geo/1.0/zip?zip=${zip}&appid=${OPENWEATHER_API_KEY}`,
   );
@@ -38,7 +50,13 @@ export async function getCoordsByZip(zip) {
   return coordsArray;
 }
 
-export async function getLocationCodes(coordsArray) {
+/**
+ * Fetches location codes from GeoApify API given coordinates
+ *
+ * @param coordsArray - Array [lat, lon]
+ * @returns Object { state_code, country_code, time_zone_abbreviation }
+ */
+async function getLocationCodes(coordsArray) {
   const [lat, lon] = coordsArray;
   const requestOptions = {
     method: 'GET',
@@ -68,6 +86,17 @@ export async function getLocationCodes(coordsArray) {
 
 // Core function: Fetch weather data given coordinates
 // Optionally accepts pre-fetched location codes to skip the API call and return cached data
+/**
+ * Fetch weather data given coordinates.
+ * Optionally accepts pre-fetch location codes to skip API call and return cached data
+ * Weather object returned sets saved_location_id and display_order to null; We assume these will be set later by the caller using database values
+ *
+ * @param lat - latitude
+ * @param lon - longitutde
+ * @param locationName
+ * @param locationCodes - Object { state_code, country_code, time_zone_abbreviation }
+ * @returns Weather Object with weather data and location codes
+ */
 async function fetchWeatherDataByCoords(lat, lon, locationName, locationCodes = null) {
   try {
     // 1. fetch weather data from OpenWeatherMap
@@ -114,6 +143,12 @@ async function fetchWeatherDataByCoords(lat, lon, locationName, locationCodes = 
 }
 
 // Fetch weather from user input (city name or zip code)
+/**
+ * Fetch weather from user input (city name or zip code)
+ *
+ * @param input - City name or zip code
+ * @returns - Weather Object with weather data and location codes
+ */
 export async function fetchWeatherData(input) {
   if (!input) {
     throw new Error('No input provided when fetching weather data.');
@@ -137,8 +172,16 @@ export async function fetchWeatherData(input) {
   );
 }
 
-// Fetch weather from existing coordinates (ie from database)
-// Use this when you already have lat/ lon and location codes from db
+/**
+ * Fetch weather from existing coordinates
+ * To be used when lat/ lon and location codes are already known (ie from database)
+ *
+ * @param {*} lat - latitude
+ * @param {*} lon - longitutude
+ * @param {*} locationName
+ * @param {*} locationCodes - Object { state_code, country_code, time_zone_abbreviation }
+ * @returns Weather Object with weather data and location codes
+ */
 export async function fetchWeatherDataFromCoords(lat, lon, locationName, locationCodes) {
   if (debug) {
     console.log('fetchWeatherDataFromCoords called with:', lat, lon, locationName, locationCodes);
@@ -151,6 +194,12 @@ export async function fetchWeatherDataFromCoords(lat, lon, locationName, locatio
   return fetchWeatherDataByCoords(lat, lon, locationName, locationCodes);
 }
 
+/**
+ * Add a city to the store and database
+ * Optimistically updates the store before making the API call to the database
+ *
+ * @param {*} newObj - Weather object with weather data and location codes
+ */
 export async function handleAddCity(newObj) {
   const addCityWeather = useStore.getState().addCityWeather;
   const updateCityWeather = useStore.getState().updateCityWeather;
@@ -220,6 +269,15 @@ export async function handleAddCity(newObj) {
   }
 }
 
+/**
+ * Remove a city from the store and database
+ * We assume that the cardUuid is the internal UUID of the city in store, not the id from the database
+ * Optimistically updates the store before making the API call to the database
+ * If the city was not saved to the database, deletion from the store proceeds normally
+ *
+ * @param cardUuid - UUID of the city to remove
+ * @returns - Void if successful, error if unsuccessful
+ */
 export async function handleRemoveCity(cardUuid) {
   const deleteCityById = useStore.getState().deleteCityById;
   const getCityWeatherById = useStore.getState().getCityWeatherById;
@@ -272,6 +330,7 @@ export async function handleRemoveCity(cardUuid) {
 
     // 6. rollback optimistic update if error
     await handleAddCity(weatherObj);
+    setError(err.message || 'Failed to remove location from database');
     throw err;
   }
 }
