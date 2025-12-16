@@ -66,6 +66,91 @@ export async function getLocationCodes(coordsArray) {
   return locationDataObj;
 }
 
+// Core function: Fetch weather data given coordinates
+// Optionally accepts pre-fetched location codes to skip the API call and return cached data
+async function fetchWeatherDataByCoords(lat, lon, locationName, locationCodes = null) {
+  try {
+    // 1. fetch weather data from OpenWeatherMap
+    const res = await fetch(
+      `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&units=imperial&appid=${OPENWEATHER_API_KEY}`,
+    );
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new Error('City not found. Try another search.');
+      } else {
+        throw new Error('Failed to fetch weather. Please try again.');
+      }
+    }
+
+    const data = await res.json(); // weather data from OpenWeatherMap
+    if (debug) console.log(data);
+
+    // 2. get location codes if not provided
+    let codes = locationCodes;
+    if (!codes) {
+      codes = await getLocationCodes([lat, lon]);
+    }
+
+    // 3. create new weather object and return
+    const newObj = {
+      ...data,
+      state_code: codes.state_code,
+      country_code: codes.country_code,
+      time_zone_abbreviation: codes.time_zone_abbreviation,
+      location: locationName,
+      id: crypto.randomUUID(),
+      saved_location_id: null, // for syncing endpoints
+      display_order: null,
+    };
+
+    if (debug) console.log('newObj to be returned by fetchWeatherData:', newObj);
+
+    return newObj;
+  } catch (err) {
+    console.error(err.message || 'ERROR FETCHING WEATHER DATA BY COORDS');
+    throw new Error(err.message || 'Failed to fetch weather data. Please try again.');
+  }
+}
+
+// Fetch weather from user input (city name or zip code)
+export async function fetchWeatherData(input) {
+  if (!input) {
+    throw new Error('No input provided when fetching weather data.');
+  }
+  // 1. Get coordinates from input and create coordsArray
+  let coordsArray;
+  if (!Number.isNaN(parseInt(input, 10))) {
+    coordsArray = await getCoordsByZip(input);
+  } else {
+    coordsArray = await getCoordsByName(input);
+  }
+
+  if (debug) console.log('coordsArray:', coordsArray);
+
+  // 2. Fetch weather data using coordinates
+  return fetchWeatherDataByCoords(
+    coordsArray[0], // lat
+    coordsArray[1], // lon
+    coordsArray[2], // locationName
+    null, // locationCodes -- will be fetched
+  );
+}
+
+// Fetch weather from existing coordinates (ie from database)
+// Use this when you already have lat/ lon and location codes from db
+export async function fetchWeatherDataFromCoords(lat, lon, locationName, locationCodes) {
+  if (debug) {
+    console.log('fetchWeatherDataFromCoords called with:', lat, lon, locationName, locationCodes);
+  }
+
+  if (!lat || !lon || !locationName || !locationCodes) {
+    throw new Error('Missing required parameters when fetching weather data from coordinates.');
+  }
+
+  return fetchWeatherDataByCoords(lat, lon, locationName, locationCodes);
+}
+
 export async function handleAddCity(newObj) {
   const addCityWeather = useStore.getState().addCityWeather;
   const updateCityWeather = useStore.getState().updateCityWeather;
@@ -96,7 +181,7 @@ export async function handleAddCity(newObj) {
         location: newObj.location,
         state_code: newObj.state_code,
         country_code: newObj.country_code,
-        timezone_abbreviation: newObj.time_zone_abbreviation,
+        time_zone_abbreviation: newObj.time_zone_abbreviation,
         latitude: newObj.lat,
         longitude: newObj.lon,
       }),
@@ -129,58 +214,10 @@ export async function handleAddCity(newObj) {
       });
     }
   } catch (err) {
-    if (debug) console.log('ERROR ADDING CITY:', err);
+    if (debug) console.error(err.message || 'ERROR ADDING CITY in handleAddCity');
+    setError(err.message || 'ERROR ADDING CITY');
     throw new Error('ERROR ADDING CITY');
   }
-}
-
-export async function fetchWeatherData(input) {
-  if (!input) {
-    throw new Error('No input provided when fetching weather data.');
-  }
-  // 1. create coordsArray
-  let coordsArray;
-  if (!Number.isNaN(parseInt(input, 10))) {
-    coordsArray = await getCoordsByZip(input);
-  } else {
-    coordsArray = await getCoordsByName(input);
-  }
-
-  if (debug) console.log('coordsArray:', coordsArray);
-
-  const res = await fetch(
-    `https://api.openweathermap.org/data/3.0/onecall?lat=${coordsArray[0]}&lon=${coordsArray[1]}&units=imperial&appid=${OPENWEATHER_API_KEY}`,
-  );
-
-  if (!res.ok) {
-    if (res.status === 404) {
-      throw new Error('City not found. Try another search.');
-    } else {
-      throw new Error('Failed to fetch weather. Please try again.');
-    }
-  }
-
-  const data = await res.json(); // weather data from OpenWeatherMap
-  if (debug) console.log(data);
-
-  // 2. get location codes
-  const locationCodes = await getLocationCodes(coordsArray.slice(0, 2));
-
-  // 3. create new weather object and return
-  const newObj = {
-    ...data,
-    state_code: locationCodes.state_code,
-    country_code: locationCodes.country_code,
-    time_zone_abbreviation: locationCodes.time_zone_abbreviation,
-    location: coordsArray[2],
-    id: crypto.randomUUID(),
-    saved_location_id: null, // for syncing endpoints
-    display_order: null,
-  };
-
-  if (debug) console.log('newObj to be returned by fetchWeatherData:', newObj);
-
-  return newObj;
 }
 
 export async function handleRemoveCity(cardUuid) {

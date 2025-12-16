@@ -77,7 +77,6 @@ export default function Weather() {
   const selectedWeather = useStore.getState().getCityWeatherById(selectedId);
 
   const handleCloseCardDetails = useCallback(() => {
-    if (debug) console.log('close!');
     setSelectedId(null);
   }, []);
 

@@ -37,7 +37,9 @@ const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 export async function GET(request) {
   const { data: selectData, error: selectError } = await supabase
     .from('user_saved_locations')
-    .select('*, locations(longitude, latitude)')
+    .select(
+      '*, locations(longitude, latitude, location, state_code, country_code, time_zone_abbreviation)',
+    )
     .eq('user_id', HARDCODED_USER_ID);
   if (selectError) {
     return NextResponse.json({ error: selectError.message }, { status: 500 });
@@ -63,7 +65,7 @@ export async function GET(request) {
  * @param request.body.location - Location name
  * @param request.body.state_code - State code
  * @param request.body.country_code - Country code
- * @param request.body.timezone_abbreviation - Timezone abbreviation
+ * @param request.body.time_zone_abbreviation - Timezone abbreviation
  * @param request.body.latitude - Latitude
  * @param request.body.longitude - Longitude
  *
@@ -76,7 +78,7 @@ export async function GET(request) {
  *   location: "New York",
  *   state_code: "NY",
  *   country_code: "US",
- *   timezone_abbreviation: "EST",
+ *   time_zone_abbreviation: "EST",
  *   latitude: 40.7128,
  *   longitude: -74.0060
  * }
@@ -117,15 +119,22 @@ export async function POST(request) {
   const res = await request.json();
   if (debug) console.log('Response body:', res);
 
-  const { userId, location, state_code, country_code, timezone_abbreviation, latitude, longitude } =
-    res;
+  const {
+    userId,
+    location,
+    state_code,
+    country_code,
+    time_zone_abbreviation,
+    latitude,
+    longitude,
+  } = res;
 
   if (
     !userId || // remove once authentication is implemented
     !location ||
     !state_code ||
     !country_code ||
-    !timezone_abbreviation ||
+    !time_zone_abbreviation ||
     !latitude ||
     !longitude
   ) {
@@ -163,7 +172,7 @@ export async function POST(request) {
         location,
         state_code,
         country_code,
-        timezone_abbreviation,
+        time_zone_abbreviation,
         latitude,
         longitude,
       })

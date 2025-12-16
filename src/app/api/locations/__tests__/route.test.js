@@ -31,7 +31,7 @@ async function testPOSTEndpoint() {
         location: 'Mexico City',
         state_code: 'DF',
         country_code: 'MX',
-        timezone_abbreviation: 'CST',
+        time_zone_abbreviation: 'CST',
         latitude: 19.4326,
         longitude: -99.1332,
       }),
