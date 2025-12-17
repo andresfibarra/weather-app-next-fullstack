@@ -4,6 +4,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import WeatherCardsList from '@/components/weather-cards-list';
 import WeatherCardModal from '@/components/weather-card-modal';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+
 import useStore from '@/store/useWeatherStore';
 import { handleAddCity, handleRemoveCity, fetchWeatherData } from '@/app/lib/weather/weather-data';
 import { hydrateStoreFromSupabase } from '@/app/lib/weather/sync';
@@ -31,6 +41,13 @@ export default function Weather() {
     if (debug) console.log('Hydrating store on mount');
     hydrateStoreFromSupabase();
   }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   async function getWeather(input) {
     if (!input) return;
@@ -80,27 +97,39 @@ export default function Weather() {
     setSelectedId(null);
   }, []);
 
+  function handleDragEnd(event) {
+    const { active, over } = event;
+    if (over) {
+      console.log('Drag end:', active, over);
+    }
+
+    if (active.id !== over.id) {
+      console.log('oops');
+    }
+  }
+
   return (
-    <div className="flex flex-col items-center pt-6">
-      {selectedWeather && (
-        <WeatherCardModal weather={selectedWeather} onClose={handleCloseCardDetails} />
-      )}
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div className="flex flex-col items-center pt-6">
+        {selectedWeather && (
+          <WeatherCardModal weather={selectedWeather} onClose={handleCloseCardDetails} />
+        )}
 
-      <h1 className="text-white text-3xl pb-5 font-medium">Weather</h1>
+        <h1 className="text-white text-3xl pb-5 font-medium">Weather</h1>
 
-      <input
-        placeholder="Enter city name or zip"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={handleKeyDown}
-        className="mb-4 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
-      />
+        <input
+          placeholder="Enter city name or zip"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="mb-4 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+        />
 
-      {loading && <div className="mt-1 text-[0.9rem] text-sky-400">Loading weather...</div>}
+        {loading && <div className="mt-1 text-[0.9rem] text-sky-400">Loading weather...</div>}
 
-      {!loading && error?.message && (
-        <div
-          className="
+        {!loading && error?.message && (
+          <div
+            className="
             mt-1
             text-[0.9rem]
             text-orange-500
@@ -111,14 +140,15 @@ export default function Weather() {
             max-w-[420px]
             text-center
           "
-        >
-          {error.message}
-        </div>
-      )}
+          >
+            {error.message}
+          </div>
+        )}
 
-      {citiesWeather && citiesWeather.length > 0 && (
-        <WeatherCardsList onRemove={handleRemoveCard} onExpand={handleOpenCardDetails} />
-      )}
-    </div>
+        {citiesWeather && citiesWeather.length > 0 && (
+          <WeatherCardsList onRemove={handleRemoveCard} onExpand={handleOpenCardDetails} />
+        )}
+      </div>
+    </DndContext>
   );
 }
