@@ -125,6 +125,9 @@ const useStore = create(
             );
           },
 
+          // -----------------------------
+          // Reorder cities in store given their uuid's
+          // -----------------------------
           reorderCities: (movedId, targetId) => {
             const movedDisplayOrder = get().citiesWeather.find(
               (c) => c.id === movedId,
@@ -147,9 +150,6 @@ const useStore = create(
             );
             set((draftState) => {
               if (movedDisplayOrder < targetDisplayOrder) {
-                console.log('Decrementing display_order for cities...');
-                console.log('movedDisplayOrder:', movedDisplayOrder);
-                console.log('targetDisplayOrder:', targetDisplayOrder);
                 // case 1: user is moving the city to a higher display_order
                 draftState.citiesWeather = draftState.citiesWeather.map((city) => {
                   if (
@@ -164,9 +164,6 @@ const useStore = create(
                 });
               } else {
                 // case 2: user is moving the city to a lower display_order
-                console.log('Incrementing display_order for cities...');
-                console.log('movedDisplayOrder:', movedDisplayOrder);
-                console.log('targetDisplayOrder:', targetDisplayOrder);
                 draftState.citiesWeather = draftState.citiesWeather.map((city) => {
                   if (
                     city.display_order >= Math.min(movedDisplayOrder, targetDisplayOrder) &&

@@ -15,7 +15,12 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
 import useStore from '@/store/useWeatherStore';
-import { handleAddCity, handleRemoveCity, fetchWeatherData } from '@/app/lib/weather/weather-data';
+import {
+  handleAddCity,
+  handleRemoveCity,
+  fetchWeatherData,
+  handleReorder,
+} from '@/app/lib/weather/weather-data';
 import { hydrateStoreFromSupabase } from '@/app/lib/weather/sync';
 
 // TESTING
@@ -32,7 +37,6 @@ export default function Weather() {
   const error = useStore((state) => state.error);
   const setLoading = useStore((state) => state.setLoading);
   const setError = useStore((state) => state.setError);
-  const reorderCities = useStore((state) => state.reorderCities);
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
 
@@ -110,7 +114,7 @@ export default function Weather() {
 
     if (active.id !== over.id) {
       console.log('oops');
-      reorderCities(active.id, over.id);
+      handleReorder(active.id, over.id);
     }
   }
 

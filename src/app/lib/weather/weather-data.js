@@ -334,3 +334,52 @@ export async function handleRemoveCity(cardUuid) {
     throw err;
   }
 }
+
+export async function handleReorder(movedId, targetId) {
+  const reorderCities = useStore.getState().reorderCities;
+  const getCityWeatherById = useStore.getState().getCityWeatherById;
+  const setError = useStore.getState().setError;
+
+  if (debug) console.log('Reordering cities...');
+  if (debug) console.log('movedId:', movedId);
+  if (debug) console.log('targetId:', targetId);
+
+  // 1. Optimistically reorder in store
+  reorderCities(movedId, targetId);
+
+  try {
+    // 2. Call API to reorder in database
+    const movedLocationId = getCityWeatherById(movedId)?.saved_location_id;
+    const targetLocationId = getCityWeatherById(targetId)?.saved_location_id;
+
+    if (!movedLocationId || !targetLocationId) {
+      throw new Error('Provided location IDs not found');
+    }
+
+    const res = await fetch('/api/locations/reorder', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        movedId: movedLocationId,
+        targetId: targetLocationId,
+      }),
+    });
+
+    const data = await res.json();
+    if (debug) {
+      console.log('POST Response:', res);
+      console.log('POST API Response:', data);
+    }
+
+    if (!res.ok) {
+      // 3. rollback optimistic update on error
+      reorderCities(targetId, movedId);
+      throw new Error(data.error || 'Failed to save location');
+    }
+  } catch (err) {
+    if (debug) console.error('Failed to reorder locations:', err);
+    setError(err.message || 'Failed to reorder locations');
+  }
+}
