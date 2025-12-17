@@ -37,7 +37,8 @@ export default function WeatherCardsList({ onRemove, onExpand }) {
       "
       >
         {sortedCities.map((data) => {
-          console.log('data:', data);
+          if (debug) console.log('data:', data);
+
           if (!data) return null;
 
           return (

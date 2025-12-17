@@ -125,6 +125,68 @@ const useStore = create(
             );
           },
 
+          reorderCities: (movedId, targetId) => {
+            const movedDisplayOrder = get().citiesWeather.find(
+              (c) => c.id === movedId,
+            )?.display_order;
+            const targetDisplayOrder = get().citiesWeather.find(
+              (c) => c.id === targetId,
+            )?.display_order;
+
+            if (!movedDisplayOrder || !targetDisplayOrder) {
+              setError('Error reordering cities');
+              console.error('Error reordering cities:', movedId, targetId);
+              return;
+            }
+
+            // Reorder  locations in store
+            console.log(
+              'Moving between these display_orders:',
+              movedDisplayOrder,
+              targetDisplayOrder,
+            );
+            set((draftState) => {
+              if (movedDisplayOrder < targetDisplayOrder) {
+                console.log('Decrementing display_order for cities...');
+                console.log('movedDisplayOrder:', movedDisplayOrder);
+                console.log('targetDisplayOrder:', targetDisplayOrder);
+                // case 1: user is moving the city to a higher display_order
+                draftState.citiesWeather = draftState.citiesWeather.map((city) => {
+                  if (
+                    city.display_order > Math.min(movedDisplayOrder, targetDisplayOrder) &&
+                    city.display_order <= Math.max(movedDisplayOrder, targetDisplayOrder)
+                  ) {
+                    console.log('Decrementing display_order for city:', city.location, city.id);
+                    city.display_order--;
+                    return city;
+                  }
+                  return city; // no change
+                });
+              } else {
+                // case 2: user is moving the city to a lower display_order
+                console.log('Incrementing display_order for cities...');
+                console.log('movedDisplayOrder:', movedDisplayOrder);
+                console.log('targetDisplayOrder:', targetDisplayOrder);
+                draftState.citiesWeather = draftState.citiesWeather.map((city) => {
+                  if (
+                    city.display_order >= Math.min(movedDisplayOrder, targetDisplayOrder) &&
+                    city.display_order < Math.max(movedDisplayOrder, targetDisplayOrder)
+                  ) {
+                    console.log('Incrementing display_order for city:', city.location, city.id);
+                    city.display_order++;
+                    return city;
+                  }
+                  return city; // no change
+                });
+              }
+              // reset the display_order of the moved city
+              const movedCity = draftState.citiesWeather.find((c) => c.id === movedId);
+              if (movedCity) {
+                movedCity.display_order = targetDisplayOrder;
+              }
+            });
+          },
+
           // -----------------------------
           // Set loading state
           // -----------------------------

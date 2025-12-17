@@ -32,7 +32,7 @@ export default function Weather() {
   const error = useStore((state) => state.error);
   const setLoading = useStore((state) => state.setLoading);
   const setError = useStore((state) => state.setError);
-
+  const reorderCities = useStore((state) => state.reorderCities);
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
 
@@ -104,11 +104,13 @@ export default function Weather() {
   function handleDragEnd(event) {
     const { active, over } = event;
     if (over) {
-      console.log('Drag end:', active, over);
+      console.log('Drag end:', active);
+      console.log('Over:', over);
     }
 
     if (active.id !== over.id) {
       console.log('oops');
+      reorderCities(active.id, over.id);
     }
   }
 
