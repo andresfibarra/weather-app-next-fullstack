@@ -72,6 +72,11 @@ const useStore = create(
           // Delete city card in store by its card UUID
           // -----------------------------
           deleteCityById: (id) => {
+            if (!id) return;
+
+            const city = get().citiesWeather.find((c) => c.id === id);
+            if (!city) return;
+
             const display_threshold = get().citiesWeather.find((c) => c.id === id)?.display_order;
 
             // use Immer to mutate and remove the deleted city from the store
@@ -86,6 +91,8 @@ const useStore = create(
               draftState.citiesWeather = draftState.citiesWeather.map((city) => {
                 if (city.display_order > display_threshold) {
                   city.display_order--;
+                  return city;
+                } else {
                   return city;
                 }
               });

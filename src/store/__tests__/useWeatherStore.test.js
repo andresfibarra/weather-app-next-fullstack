@@ -132,4 +132,108 @@ describe('useWeatherStore', () => {
       expect(useStore.getState().citiesWeather).toHaveLength(1);
     });
   });
+
+  describe('deleteCityById', () => {
+    it('should delete a city by its ID', () => {
+      const city1 = createMockCity({
+        id: '1',
+        location: 'Springfield',
+        state_code: 'MO',
+        country_code: 'US',
+        display_order: 1,
+      });
+      const city2 = createMockCity({
+        id: '2',
+        location: 'Seattle',
+        state_code: 'WA',
+        country_code: 'US',
+        display_order: 2,
+      });
+      const city3 = createMockCity({
+        id: '3',
+        location: 'Los Altos',
+        state_code: 'CA',
+        country_code: 'US',
+        display_order: 3,
+      });
+
+      useStore.getState().addCityWeather(city1);
+      useStore.getState().addCityWeather(city2);
+      useStore.getState().addCityWeather(city3);
+      const cities = useStore.getState().citiesWeather;
+
+      expect(cities).toHaveLength(3);
+      expect(cities.find((c) => c.id === '2')).toBeDefined();
+
+      useStore.getState().deleteCityById('2');
+      const resultCities = useStore.getState().citiesWeather;
+
+      expect(resultCities).toHaveLength(2);
+      expect(resultCities.find((c) => c.id === '2')).toBeUndefined();
+    });
+
+    it('should reorder remaining cities after deletion', () => {
+      const city1 = createMockCity({
+        id: '1',
+        location: 'Springfield',
+        state_code: 'MO',
+        country_code: 'US',
+        display_order: 1,
+      });
+      const city2 = createMockCity({
+        id: '2',
+        location: 'Seattle',
+        state_code: 'WA',
+        country_code: 'US',
+        display_order: 2,
+      });
+      const city3 = createMockCity({
+        id: '3',
+        location: 'Los Altos',
+        state_code: 'CA',
+        country_code: 'US',
+        display_order: 3,
+      });
+
+      useStore.getState().addCityWeather(city1);
+      useStore.getState().addCityWeather(city2);
+      useStore.getState().addCityWeather(city3);
+
+      useStore.getState().deleteCityById('2');
+
+      const cities = useStore.getState().citiesWeather;
+      const city3AfterDelete = cities.find((c) => c.id === '3');
+      expect(city3AfterDelete.display_order).toBe(2); // Should be decremented from 3 to 2
+    });
+
+    it('should handle deletion when city has no display_order', () => {
+      const city = createMockCity({ id: '1' });
+      delete city.display_order;
+
+      useStore.getState().addCityWeather(city);
+      useStore.getState().deleteCityById('1');
+
+      expect(useStore.getState().citiesWeather).toHaveLength(0);
+    });
+
+    it('should do nothing if city ID does not exist', () => {
+      const city = createMockCity({ id: '1' });
+      useStore.getState().addCityWeather(city);
+
+      useStore.getState().deleteCityById(null);
+
+      expect(useStore.getState().citiesWeather).toHaveLength(1);
+    });
+
+    it('should do nothing if city ID is not in the store', () => {
+      const city = createMockCity({ id: '1' });
+      useStore.getState().addCityWeather(city);
+
+      useStore.getState().deleteCityById('non-existent-id');
+
+      expect(useStore.getState().citiesWeather).toHaveLength(1);
+    });
+  });
+
+  describe.todo('getCityWeatherById', () => {});
 });
