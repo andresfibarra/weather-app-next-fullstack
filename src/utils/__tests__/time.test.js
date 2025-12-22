@@ -12,6 +12,10 @@ describe('convertToTime', () => {
     const timeWithoutName = convertToTime(1713321600, 'America/New_York', false);
     expect(timeWithoutName).toBe('10:40 PM');
   });
-});
 
-convertToTime(1713321600, 'America/New_York', true); // '01:00 PM EST'
+  it('handles different time zones differently', () => {
+    const time1 = convertToTime(1713321600, 'America/New_York', true);
+    const time2 = convertToTime(1713321600, 'America/Los_Angeles', true);
+    expect(time1).not.toBe(time2);
+  });
+});
