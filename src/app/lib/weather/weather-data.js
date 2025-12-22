@@ -73,10 +73,18 @@ async function getLocationCodes(coordsArray) {
 
   const locationData = await res.json();
   if (debug) console.log('locationData:', locationData);
+
+  // Ensure we have a time zone
+  let timeZone = locationData.features[0].properties.timezone.abbreviation_STD;
+  if (!locationData.features[0].properties.timezone.abbreviation_STD) {
+    console.error('No time zone abbreviation found for location. Using name instead');
+    timeZone = locationData.features[0].properties.timezone.name;
+  }
+
   const locationDataObj = {
     state_code: locationData.features[0].properties.state_code,
     country_code: locationData.features[0].properties.country_code.toUpperCase(),
-    time_zone_abbreviation: locationData.features[0].properties.timezone.abbreviation_STD,
+    time_zone_abbreviation: timeZone,
   };
 
   if (debug) console.log('locationDataObj:', locationDataObj);

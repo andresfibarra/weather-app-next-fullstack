@@ -142,6 +142,10 @@ const useStore = create(
               (c) => c.id === targetId,
             )?.display_order;
 
+            if (movedId === targetId || movedDisplayOrder === targetDisplayOrder) {
+              return;
+            }
+
             if (!movedDisplayOrder || !targetDisplayOrder) {
               get().setError('Error reordering cities');
               console.error('Error reordering cities:', movedId, targetId);

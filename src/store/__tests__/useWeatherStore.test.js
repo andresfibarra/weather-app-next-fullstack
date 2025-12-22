@@ -2,12 +2,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import useStore from '../useWeatherStore';
 
-describe.todo('unimplemented suite');
-
-describe('suite', () => {
-  it.todo('unimplemented test');
-});
-
 // Mock localStorage
 const localStorageMock = (() => {
   let store = {};
@@ -255,6 +249,12 @@ describe('useWeatherStore', () => {
       expect(useStore.getState().getCityWeatherById(undefined)).toBeNull();
       expect(useStore.getState().getCityWeatherById('')).toBeNull();
     });
+
+    it('should return null when cityWeather is empty', () => {
+      useStore.getState().setCitiesWeather([]);
+      const result = useStore.getState().getCityWeatherById('1');
+      expect(result).toBeNull();
+    });
   });
 
   describe('updateCityWeather', () => {
@@ -382,6 +382,16 @@ describe('useWeatherStore', () => {
       expect(cities.find((c) => c.id === '3').display_order).toBe(1);
       expect(cities.find((c) => c.id === '1').display_order).toBe(2); // Incremented
       expect(cities.find((c) => c.id === '2').display_order).toBe(3); // Incremented
+    });
+
+    it('should do nothing if movedId and targetId are the same', () => {
+      // Move city 3 (order 3) to position 1
+      useStore.getState().reorderCities('3', '3');
+
+      const cities = useStore.getState().citiesWeather;
+      expect(cities.find((c) => c.id === '1').display_order).toBe(1);
+      expect(cities.find((c) => c.id === '2').display_order).toBe(2);
+      expect(cities.find((c) => c.id === '3').display_order).toBe(3);
     });
 
     it('should set error if movedId not found', () => {
