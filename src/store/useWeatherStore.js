@@ -85,8 +85,6 @@ const useStore = create(
             });
 
             // Reorder remaining locations in store
-            console.log('Reordering remaining locations in store...');
-            console.log('display_threshold:', display_threshold);
             set((draftState) => {
               draftState.citiesWeather = draftState.citiesWeather.map((city) => {
                 if (city.display_order > display_threshold) {
@@ -134,6 +132,7 @@ const useStore = create(
 
           // -----------------------------
           // Reorder cities in store given their uuid's
+          // Moves city with movedId to the position of targetId
           // -----------------------------
           reorderCities: (movedId, targetId) => {
             const movedDisplayOrder = get().citiesWeather.find(
@@ -144,17 +143,12 @@ const useStore = create(
             )?.display_order;
 
             if (!movedDisplayOrder || !targetDisplayOrder) {
-              setError('Error reordering cities');
+              get().setError('Error reordering cities');
               console.error('Error reordering cities:', movedId, targetId);
               return;
             }
 
             // Reorder  locations in store
-            console.log(
-              'Moving between these display_orders:',
-              movedDisplayOrder,
-              targetDisplayOrder,
-            );
             set((draftState) => {
               if (movedDisplayOrder < targetDisplayOrder) {
                 // case 1: user is moving the city to a higher display_order
@@ -163,7 +157,6 @@ const useStore = create(
                     city.display_order > Math.min(movedDisplayOrder, targetDisplayOrder) &&
                     city.display_order <= Math.max(movedDisplayOrder, targetDisplayOrder)
                   ) {
-                    console.log('Decrementing display_order for city:', city.location, city.id);
                     city.display_order--;
                     return city;
                   }
@@ -176,7 +169,6 @@ const useStore = create(
                     city.display_order >= Math.min(movedDisplayOrder, targetDisplayOrder) &&
                     city.display_order < Math.max(movedDisplayOrder, targetDisplayOrder)
                   ) {
-                    console.log('Incrementing display_order for city:', city.location, city.id);
                     city.display_order++;
                     return city;
                   }

@@ -235,5 +235,196 @@ describe('useWeatherStore', () => {
     });
   });
 
-  describe.todo('getCityWeatherById', () => {});
+  describe('getCityWeatherById', () => {
+    it('should return city when found', () => {
+      const city = createMockCity({ id: 'test-id' });
+      useStore.getState().addCityWeather(city);
+
+      const result = useStore.getState().getCityWeatherById('test-id');
+
+      expect(result).toEqual(city);
+    });
+
+    it('should return null when city not found', () => {
+      const result = useStore.getState().getCityWeatherById('non-existent-id');
+      expect(result).toBeNull();
+    });
+
+    it('should return null when ID is falsy', () => {
+      expect(useStore.getState().getCityWeatherById(null)).toBeNull();
+      expect(useStore.getState().getCityWeatherById(undefined)).toBeNull();
+      expect(useStore.getState().getCityWeatherById('')).toBeNull();
+    });
+  });
+
+  describe('updateCityWeather', () => {
+    it('should update existing city with new data', () => {
+      const city = createMockCity({ id: '1', location: 'New York', current: { temp: 72 } });
+      useStore.getState().addCityWeather(city);
+
+      useStore.getState().updateCityWeather('1', {
+        location: 'Updated New York',
+        current: { temp: 75 },
+      });
+
+      const updatedCity = useStore.getState().getCityWeatherById('1');
+      expect(updatedCity.location).toBe('Updated New York');
+      expect(updatedCity.current.temp).toBe(75);
+    });
+
+    it('should maintain old fields when updating with partial data', () => {
+      const city = createMockCity({
+        id: '1',
+        location: 'New York',
+        current: { temp: 72 },
+        display_order: 1,
+      });
+      useStore.getState().addCityWeather(city);
+
+      useStore.getState().updateCityWeather('1', {
+        location: 'Updated New York',
+        current: { temp: 75 },
+      });
+
+      const updatedCity = useStore.getState().getCityWeatherById('1');
+      expect(updatedCity.display_order).toBe(1);
+    });
+
+    it('should update multiple fields at once', () => {
+      const city = createMockCity({ id: '1' });
+      useStore.getState().addCityWeather(city);
+
+      useStore.getState().updateCityWeather('1', {
+        state_code: 'CA',
+        country_code: 'MX',
+        saved_location_id: 'new-saved-id',
+      });
+
+      const updatedCity = useStore.getState().getCityWeatherById('1');
+      expect(updatedCity.state_code).toBe('CA');
+      expect(updatedCity.country_code).toBe('MX');
+      expect(updatedCity.saved_location_id).toBe('new-saved-id');
+    });
+
+    it('should do nothing if city not found', () => {
+      const city = createMockCity({ id: '1' });
+      useStore.getState().addCityWeather(city);
+
+      useStore.getState().updateCityWeather('non-existent', { location: 'Updated' });
+
+      const cityAfterUpdate = useStore.getState().getCityWeatherById('1');
+      expect(cityAfterUpdate.location).toBe('New York'); // Unchanged
+    });
+
+    it('should do nothing if updatedData is null or undefined', () => {
+      const city = createMockCity({ id: '1' });
+      useStore.getState().addCityWeather(city);
+
+      useStore.getState().updateCityWeather('1', null);
+      useStore.getState().updateCityWeather('1', undefined);
+
+      const cityAfterUpdate = useStore.getState().getCityWeatherById('1');
+      expect(cityAfterUpdate).toEqual(city); // Unchanged
+    });
+  });
+
+  describe('setCitiesWeather', () => {
+    it('should replace entire citiesWeather array', () => {
+      const city1 = createMockCity({ id: '1' });
+      const city2 = createMockCity({ id: '2' });
+      const city3 = createMockCity({ id: '3' });
+      useStore.getState().addCityWeather(city1);
+      useStore.getState().addCityWeather(city2);
+
+      useStore.getState().setCitiesWeather([city2]);
+
+      expect(useStore.getState().citiesWeather).toHaveLength(1);
+      expect(useStore.getState().citiesWeather[0].id).toBe('2');
+    });
+
+    it('should handle empty array', () => {
+      const city = createMockCity({ id: '1' });
+      useStore.getState().addCityWeather(city);
+
+      useStore.getState().setCitiesWeather([]);
+
+      expect(useStore.getState().citiesWeather).toHaveLength(0);
+    });
+  });
+
+  describe('reorderCities', () => {
+    beforeEach(() => {
+      // Setup: add 3 cities with display orders
+      useStore
+        .getState()
+        .setCitiesWeather([
+          createMockCity({ id: '1', display_order: 1 }),
+          createMockCity({ id: '2', display_order: 2 }),
+          createMockCity({ id: '3', display_order: 3 }),
+        ]);
+    });
+
+    it('should reorder cities when moving down (to higher display_order)', () => {
+      // Move city 1 (order 1) to position 3
+      useStore.getState().reorderCities('1', '3');
+
+      const cities = useStore.getState().citiesWeather;
+      expect(cities.find((c) => c.id === '1').display_order).toBe(3);
+      expect(cities.find((c) => c.id === '2').display_order).toBe(1); // Decremented
+      expect(cities.find((c) => c.id === '3').display_order).toBe(2); // Decremented
+    });
+
+    it('should reorder cities when moving up (to lower display_order)', () => {
+      // Move city 3 (order 3) to position 1
+      useStore.getState().reorderCities('3', '1');
+
+      const cities = useStore.getState().citiesWeather;
+      expect(cities.find((c) => c.id === '3').display_order).toBe(1);
+      expect(cities.find((c) => c.id === '1').display_order).toBe(2); // Incremented
+      expect(cities.find((c) => c.id === '2').display_order).toBe(3); // Incremented
+    });
+
+    it('should set error if movedId not found', () => {
+      useStore.getState().reorderCities('non-existent', '1');
+
+      expect(useStore.getState().error).toEqual({ message: 'Error reordering cities' });
+    });
+
+    it('should set error if targetId not found', () => {
+      useStore.getState().reorderCities('1', 'non-existent');
+
+      expect(useStore.getState().error).toEqual({ message: 'Error reordering cities' });
+    });
+  });
+
+  describe('setLoading', () => {
+    it('should set loading state correctly', () => {
+      useStore.getState().setLoading(true);
+      expect(useStore.getState().loading).toBe(true);
+
+      useStore.getState().setLoading(false);
+      expect(useStore.getState().loading).toBe(false);
+    });
+  });
+
+  describe('setError', () => {
+    it('should set error state with message', () => {
+      useStore.getState().setError('Something went wrong');
+
+      expect(useStore.getState().error).toEqual({ message: 'Something went wrong' });
+    });
+  });
+
+  describe('clearAllCities', () => {
+    it('should clear all cities from store', () => {
+      const city1 = createMockCity({ id: '1' });
+      const city2 = createMockCity({ id: '2' });
+      useStore.getState().addCityWeather(city1);
+      useStore.getState().addCityWeather(city2);
+
+      useStore.getState().clearAllCities();
+
+      expect(useStore.getState().citiesWeather).toHaveLength(0);
+    });
+  });
 });
