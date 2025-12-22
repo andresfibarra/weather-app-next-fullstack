@@ -19,10 +19,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-// Mock Next.js Image component
-vi.mock('next/image', () => ({
-  default: (props) => {
-    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-    return <img {...props} />;
-  },
-}));
+// // Mock Next.js Image component
+// vi.mock('next/image', () => ({
+//   default: (props) => {
+//     // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+//     return <img {...props} />;
+//   },
+// }));
