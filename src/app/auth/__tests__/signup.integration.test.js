@@ -43,5 +43,123 @@ describe('Auth Integration Tests', () => {
         createdUserId = data.user.id;
       }
     });
+
+    it('should return error when email is already registered', async () => {
+      // First signup
+      const { data: firstSignup } = await testSupabase.auth.signUp({
+        email: testEmail,
+        password: testPassword,
+      });
+
+      if (firstSignup.user) {
+        createdUserId = firstSignup.user.id;
+      }
+
+      // Try to signup again with same email
+      const { data: secondSignup, error } = await testSupabase.auth.signUp({
+        email: testEmail,
+        password: testPassword,
+      });
+
+      expect(error).toBeDefined();
+      expect(error.message).toContain('already registered');
+    });
+  });
+
+  describe.skip('signIn', () => {
+    it('should successfully sign in with correct credentials', async () => {
+      // First signup
+      const { data: signupData } = await testSupabase.auth.signUp({
+        email: testEmail,
+        password: testPassword,
+      });
+
+      if (signupData.user) {
+        createdUserId = signupData.user.id;
+      }
+
+      // Sign out first (if there's a session)
+      await testSupabase.auth.signOut();
+
+      // Now sign in
+      const { data, error } = await testSupabase.auth.signInWithPassword({
+        email: testEmail,
+        password: testPassword,
+      });
+
+      expect(error).toBeNull();
+      expect(data).toBeDefined();
+      expect(data.user).toBeDefined();
+      expect(data.user.email).toBe(testEmail);
+      expect(data.session).toBeDefined();
+    });
+
+    it('should return error with incorrect password', async () => {
+      // First signup
+      const { data: signupData } = await testSupabase.auth.signUp({
+        email: testEmail,
+        password: testPassword,
+      });
+
+      if (signupData.user) {
+        createdUserId = signupData.user.id;
+      }
+
+      await testSupabase.auth.signOut();
+
+      // Try to sign in with wrong password
+      const { data, error } = await testSupabase.auth.signInWithPassword({
+        email: testEmail,
+        password: 'wrong-password',
+      });
+
+      expect(error).toBeDefined();
+      expect(error.message).toContain('Invalid login credentials');
+      expect(data.session).toBeNull();
+    });
+
+    it('should return error with non-existent email', async () => {
+      const { data, error } = await testSupabase.auth.signInWithPassword({
+        email: `nonexistent-${Date.now()}@example.com`,
+        password: testPassword,
+      });
+
+      expect(error).toBeDefined();
+      expect(error.message).toContain('Invalid login credentials');
+      expect(data.session).toBeNull();
+    });
+  });
+
+  describe.skip('signUp and signIn flow', () => {
+    it('should allow user to sign up and then sign in', async () => {
+      const uniqueEmail = `flow-test-${Date.now()}@example.com`;
+
+      // Sign up
+      const { data: signupData, error: signupError } = await testSupabase.auth.signUp({
+        email: uniqueEmail,
+        password: testPassword,
+      });
+
+      expect(signupError).toBeNull();
+      expect(signupData.user).toBeDefined();
+
+      if (signupData.user) {
+        createdUserId = signupData.user.id;
+      }
+
+      // Sign out
+      await testSupabase.auth.signOut();
+
+      // Sign in
+      const { data: signinData, error: signinError } = await testSupabase.auth.signInWithPassword({
+        email: uniqueEmail,
+        password: testPassword,
+      });
+
+      expect(signinError).toBeNull();
+      expect(signinData.user).toBeDefined();
+      expect(signinData.user.email).toBe(uniqueEmail);
+      expect(signinData.session).toBeDefined();
+    });
   });
 });
