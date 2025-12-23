@@ -18,10 +18,26 @@ export async function createTestLocation(overrides = {}) {
     ...overrides,
   };
 
-  const { data, error } = await testSupabase.from('locations').insert(location).select().single();
+  let returnData = null;
+  const { data, error } = await testSupabase
+    .from('locations')
+    .insert(location)
+    .select()
+    .maybeSingle();
+  if (!data) {
+    returnData = await testSupabase
+      .from('locations')
+      .select('*')
+      .eq('location', location.location)
+      .eq('state_code', location.state_code)
+      .eq('country_code', location.country_code)
+      .maybeSingle();
+    console.log('returnData', returnData);
+  } else {
+    returnData = data;
+  }
 
-  if (error) throw new Error(`Failed to create test location: ${error.message}`);
-  return data;
+  return returnData;
 }
 
 export { TEST_USER_ID };
