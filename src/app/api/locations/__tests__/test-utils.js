@@ -45,4 +45,9 @@ export async function createTestLocation(overrides = {}) {
   return returnData;
 }
 
+export async function createTestUser(overrides = {}) {
+  // TODO: Implement
+  return null;
+}
+
 export { TEST_USER_ID };
