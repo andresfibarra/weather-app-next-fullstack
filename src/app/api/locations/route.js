@@ -178,10 +178,8 @@ export async function POST(request) {
       })
       .select('*')
       .single());
-
-    console.log('locationError:', locationError);
     if (locationError || !locationData) {
-      if (debug) console.error('error end of step 2');
+      if (debug) console.error('error end of step 2', locationError);
       return NextResponse.json({ error: locationError.message }, { status: 500 });
     }
   }

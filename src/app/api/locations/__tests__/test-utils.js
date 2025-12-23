@@ -5,6 +5,12 @@ const TEST_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 export async function cleanupTestData() {
   await testSupabase.from('user_saved_locations').delete().eq('user_id', TEST_USER_ID);
+  const { error } = await testSupabase
+    .from('locations')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000');
+
+  if (error) console.error('Error deleting test data:', error.message);
 }
 
 export async function createTestLocation(overrides = {}) {
@@ -32,7 +38,6 @@ export async function createTestLocation(overrides = {}) {
       .eq('state_code', location.state_code)
       .eq('country_code', location.country_code)
       .maybeSingle();
-    console.log('returnData', returnData);
   } else {
     returnData = data;
   }
