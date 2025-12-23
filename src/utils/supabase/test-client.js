@@ -8,4 +8,4 @@ if (!testSupabaseUrl || !testSupabaseAnonKey) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
 }
 
-export const supabase = createClient(testSupabaseUrl, testSupabaseAnonKey);
+export const testSupabase = createClient(testSupabaseUrl, testSupabaseAnonKey);
