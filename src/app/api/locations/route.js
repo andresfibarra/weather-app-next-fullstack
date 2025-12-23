@@ -284,9 +284,3 @@ export async function POST(request) {
     },
   );
 }
-
-// POST request /api/locations/[id]/reorder --> reorder saved locations
-/*
-Body: {userId, displayOrder }
-Returns: {success: true }
-*/
