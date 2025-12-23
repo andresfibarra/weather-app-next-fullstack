@@ -25,6 +25,8 @@ vi.mock('@/utils/supabase/client', () => {
 });
 
 import { GET, POST } from '../route';
+import { DELETE } from '../[id]/route';
+import { POST as POST_REORDER } from '../reorder/route';
 
 describe('Locations API Integration Tests', () => {
   beforeEach(async () => {
@@ -331,6 +333,229 @@ describe('Locations API Integration Tests', () => {
       const response2 = await POST(request2);
       const data2 = await response2.json();
       expect(data2.displayOrder).toBe(2);
+    });
+  });
+
+  describe('Delete /api/locations/[id]', () => {
+    it('should successfully delete a saved location', async () => {
+      // Create and save a location
+      const location = await createTestLocation();
+      const { data: savedLocation } = await testSupabase
+        .from('user_saved_locations')
+        .insert({
+          user_id: TEST_USER_ID,
+          location_id: location.id,
+          display_order: 1,
+        })
+        .select()
+        .single();
+
+      const request = new NextRequest(`http://localhost:3000/api/locations/${savedLocation.id}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ user_id: TEST_USER_ID }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const response = await DELETE(request, {
+        params: Promise.resolve({ id: savedLocation.id }),
+      });
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.message).toBe('Location removed successfully');
+      expect(data.deletedLocationId).toBe(savedLocation.id);
+
+      // Verify location was deleted
+      const { data: deletedLocation } = await testSupabase
+        .from('user_saved_locations')
+        .select('*')
+        .eq('user_id', TEST_USER_ID)
+        .eq('id', savedLocation.id)
+        .maybeSingle();
+
+      expect(deletedLocation).toBeNull();
+    });
+
+    it('should return 404 when location does not exist', async () => {
+      const nonExistentId = '00000000-0000-0000-0000-000000000000';
+
+      const request = new NextRequest(`http://localhost:3000/api/locations/${nonExistentId}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ user_id: TEST_USER_ID }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const response = await DELETE(request, {
+        params: Promise.resolve({ id: nonExistentId }),
+      });
+      const data = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(data.success).toBe(false);
+      expect(data.error).toBe('Location not found in database');
+    });
+
+    it('should return 400 when user_id is missing', async () => {
+      const request = new NextRequest('http://localhost:3000/api/locations/some-id', {
+        method: 'DELETE',
+        body: JSON.stringify({}), // Missing user_id
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const response = await DELETE(request, {
+        params: Promise.resolve({ id: 'some-id' }),
+      });
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.success).toBe(false);
+      expect(data.error).toBe('User ID is required');
+    });
+
+    it('should reorder remaining locations after deletion', async () => {
+      // Create three saved locations
+      const location1 = await createTestLocation({ location: 'City 1' });
+      const location2 = await createTestLocation({ location: 'City 2' });
+      const location3 = await createTestLocation({ location: 'City 3' });
+
+      const { data: saved1 } = await testSupabase
+        .from('user_saved_locations')
+        .insert({
+          user_id: TEST_USER_ID,
+          location_id: location1.id,
+          display_order: 1,
+        })
+        .select()
+        .single();
+
+      const { data: saved2 } = await testSupabase
+        .from('user_saved_locations')
+        .insert({
+          user_id: TEST_USER_ID,
+          location_id: location2.id,
+          display_order: 2,
+        })
+        .select()
+        .single();
+
+      await testSupabase.from('user_saved_locations').insert({
+        user_id: TEST_USER_ID,
+        location_id: location3.id,
+        display_order: 3,
+      });
+
+      // Delete the middle location (display_order 2)
+      const request = new NextRequest(`http://localhost:3000/api/locations/${saved2.id}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ user_id: TEST_USER_ID }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const response = await DELETE(request, {
+        params: Promise.resolve({ id: saved2.id }),
+      });
+
+      expect(response.status).toBe(200);
+
+      // Verify location 3's display_order was decremented from 3 to 2
+      const { data: remainingLocations } = await testSupabase
+        .from('user_saved_locations')
+        .select('*')
+        .eq('user_id', TEST_USER_ID)
+        .order('display_order');
+
+      expect(remainingLocations).toHaveLength(2);
+      expect(remainingLocations[0].display_order).toBe(1);
+      expect(remainingLocations[1].display_order).toBe(2);
+    });
+  });
+
+  describe('POST /api/locations/reorder', () => {
+    it('should successfully reorder locations', async () => {
+      // Create and save two locations
+      const location1 = await createTestLocation({ location: 'City A' });
+      const location2 = await createTestLocation({ location: 'City B' });
+
+      const { data: saved1 } = await testSupabase
+        .from('user_saved_locations')
+        .insert({
+          user_id: TEST_USER_ID,
+          location_id: location1.id,
+          display_order: 1,
+        })
+        .select('id')
+        .single();
+
+      const { data: saved2 } = await testSupabase
+        .from('user_saved_locations')
+        .insert({
+          user_id: TEST_USER_ID,
+          location_id: location2.id,
+          display_order: 2,
+        })
+        .select('id')
+        .single();
+
+      const requestBody = {
+        movedId: saved1.id,
+        targetId: saved2.id,
+      };
+
+      const request = new NextRequest('http://localhost:3000/api/locations/reorder', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const response = await POST_REORDER(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.message).toBe('Locations reordered successfully');
+    });
+
+    it('should return 400 when movedId or targetId is missing', async () => {
+      const incompleteBody = {
+        movedId: 'some-id',
+        // Missing targetId
+      };
+
+      const request = new NextRequest('http://localhost:3000/api/locations/reorder', {
+        method: 'POST',
+        body: JSON.stringify(incompleteBody),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const response = await POST_REORDER(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.success).toBe(false);
+      expect(data.message).toBe('Invalid request body: Missing required fields');
+    });
+
+    it('should handle reorder errors gracefully', async () => {
+      // Try to reorder with non-existent IDs
+      const requestBody = {
+        movedId: 'non-existent-id',
+        targetId: 'also-non-existent-id',
+      };
+
+      const request = new NextRequest('http://localhost:3000/api/locations/reorder', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const response = await POST_REORDER(request);
+      const data = await response.json();
+
+      // Should return error (500) when RPC fails
+      expect(response.status).toBe(500);
+      expect(data.success).toBe(false);
+      expect(data.error).toBeDefined();
     });
   });
 });
