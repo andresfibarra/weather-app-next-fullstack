@@ -23,8 +23,6 @@ import {
 } from '@/app/lib/weather/weather-data';
 import { hydrateStoreFromSupabase } from '@/app/lib/weather/sync';
 
-// TESTING
-import { testEndpoints } from '@/app/api/locations/__tests__/route.test';
 const debug = true;
 
 const OPENWEATHER_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;

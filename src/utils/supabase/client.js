@@ -1,4 +1,10 @@
 // utils/supabase/client.js
+
+/**
+ * The following code comes from the official Supabase documentation:
+ * https://supabase.com/docs/guides/auth/server-side/creating-a-client?queryGroups=package-manager&package-manager=npm&queryGroups=framework&framework=nextjs
+ */
+
 import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
