@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest",
     "test:unit": "vitest --exclude '**/*.integration.test.js'",
-    "test:integration": "vitest '**/*.integration.test.js'",
+    "test:integration": "supabase status || supabase start && vitest '**/*.integration.test.js'",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage"
   },

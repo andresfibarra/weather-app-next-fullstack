@@ -1,6 +1,7 @@
 // utils/supabase/test-client.js
 import { createClient } from '@supabase/supabase-js';
 
+// Use local Supabase instance (runs on port 54321)
 const testSupabaseUrl = process.env.TEST_SUPABASE_URL;
 const testSupabaseAnonKey = process.env.TEST_SUPABASE_ANON_KEY;
 
