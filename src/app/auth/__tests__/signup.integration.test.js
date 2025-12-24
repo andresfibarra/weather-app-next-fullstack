@@ -6,7 +6,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { testSupabase } from '@/utils/supabase/test-client';
 
 describe('Auth Integration Tests', () => {
-  const testEmail = 'andres21ibarra@gmail.com';
+  const testEmail = `test-${Date.now()}@fakegmail.com`;
   const testPassword = 'test-password-123';
   let createdUserId = null;
 
@@ -44,9 +44,10 @@ describe('Auth Integration Tests', () => {
       }
     });
 
+    // Note: must disable email confirmation for this test to pass
     it('should return error when email is already registered', async () => {
       // First signup
-      const { data: firstSignup } = await testSupabase.auth.signUp({
+      const { data: firstSignup, error: firstSignupError } = await testSupabase.auth.signUp({
         email: testEmail,
         password: testPassword,
       });
@@ -66,7 +67,7 @@ describe('Auth Integration Tests', () => {
     });
   });
 
-  describe.skip('signIn', () => {
+  describe('signIn', () => {
     it('should successfully sign in with correct credentials', async () => {
       // First signup
       const { data: signupData } = await testSupabase.auth.signUp({
@@ -130,7 +131,7 @@ describe('Auth Integration Tests', () => {
     });
   });
 
-  describe.skip('signUp and signIn flow', () => {
+  describe('signUp and signIn flow', () => {
     it('should allow user to sign up and then sign in', async () => {
       const uniqueEmail = `flow-test-${Date.now()}@example.com`;
 
