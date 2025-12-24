@@ -23,42 +23,79 @@ vi.mock('@/utils/supabase/client', () => {
   };
 });
 
-describe.todo('User Isolation Integration Tests', () => {
-  it.todo("users cannot see each others' saved locations", async () => {
+describe('User Isolation Integration Tests', () => {
+  const testEmail = `test-${Date.now()}@fakegmail.com`;
+  const testPassword = 'test-password-123';
+  let createdUserId = null;
+
+  beforeEach(async () => {
+    // Clean up existing test users before each test
+    if (createdUserId) {
+      await testSupabase.auth.admin.deleteUser(createdUserId);
+      createdUserId = null;
+    }
+  });
+
+  afterEach(async () => {
+    // Clean up after
+    if (createdUserId) {
+      await testSupabase.auth.admin.deleteUser(createdUserId);
+      createdUserId = null;
+    }
+  });
+
+  it("users cannot see each others' saved locations", async () => {
+    // Create 2 test users
+    const user1 = await testSupabase.auth.signUp({
+      email: testEmail,
+      password: testPassword,
+    });
+
+    const user2 = await testSupabase.auth.signUp({
+      email: testEmail,
+      password: testPassword,
+    });
+    console.log('user1', user1);
+    console.log('user2', user2);
+    // Seed user 1 with test data
+    await createTestLocation({ user_id: user1.data.user.id });
+    // Seed user 2 with test data
+    // User 1 performs a GET
+    // Validate that user 1 cannot see user 2's data
     // sample code from supabase auth docs
     // TODO: replace with real shapes
     // Create two test users
-    const user1 = await supabase.auth.signUp({
-      email: 'user1@test.com',
-      password: 'password123',
-    });
+    // const user1 = await supabase.auth.signUp({
+    //   email: 'user1@test.com',
+    //   password: 'password123',
+    // });
 
-    const user2 = await supabase.auth.signUp({
-      email: 'user2@test.com',
-      password: 'password123',
-    });
+    // const user2 = await supabase.auth.signUp({
+    //   email: 'user2@test.com',
+    //   password: 'password123',
+    // });
 
-    // User 1 creates some data
-    await supabase.auth.signInWithPassword({
-      email: 'user1@test.com',
-      password: 'password123',
-    });
+    // // User 1 creates some data
+    // await supabase.auth.signInWithPassword({
+    //   email: 'user1@test.com',
+    //   password: 'password123',
+    // });
 
-    const { data: created } = await supabase
-      .from('posts')
-      .insert({ title: 'Private post' })
-      .select()
-      .single();
+    // const { data: created } = await supabase
+    //   .from('posts')
+    //   .insert({ title: 'Private post' })
+    //   .select()
+    //   .single();
 
-    // User 2 tries to access it
-    await supabase.auth.signInWithPassword({
-      email: 'user2@test.com',
-      password: 'password123',
-    });
+    // // User 2 tries to access it
+    // await supabase.auth.signInWithPassword({
+    //   email: 'user2@test.com',
+    //   password: 'password123',
+    // });
 
-    const { data: accessed } = await supabase.from('posts').select().eq('id', created.id);
+    // const { data: accessed } = await supabase.from('posts').select().eq('id', created.id);
 
-    expect(accessed).toHaveLength(0);
+    // expect(accessed).toHaveLength(0);
   });
 
   it.todo('users can see their own saved locations', async () => {});

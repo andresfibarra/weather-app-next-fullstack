@@ -2,7 +2,7 @@
  * @vitest-environment node
  */
 
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { testSupabase } from '@/utils/supabase/test-client';
 
 describe('Auth Integration Tests', () => {
