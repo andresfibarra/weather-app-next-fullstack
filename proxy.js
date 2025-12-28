@@ -5,7 +5,7 @@
  * https://supabase.com/docs/guides/getting-started/tutorials/with-nextjs?queryGroups=database-method&database-method=sql
  */
 
-import { updateSession } from '@/src/utils/supabase/proxy';
+import { updateSession } from '@/utils/supabase/proxy';
 
 export async function proxy(request) {
   // update user's auth session
