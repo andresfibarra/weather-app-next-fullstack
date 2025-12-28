@@ -3,9 +3,9 @@
  */
 // Test that each user's saved locations are isolated from other users' saved locations
 import { cleanupTestData, seedTestLocations, seedUserSavedLocations } from './test-utils';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { vi, describe, it, expect, afterAll } from 'vitest';
 import { testSupabase, createTestClient } from '@/utils/supabase/test-client';
-import { testLocations1, testLocations2 } from './test-locations';
+import { testLocations1 } from './test-locations';
 
 // Mock the supabase client module to use testSupabase instead
 vi.mock('@/utils/supabase/client', () => {
@@ -31,29 +31,36 @@ describe('User Isolation Integration Tests', () => {
   const supabase1 = createTestClient();
   const supabase2 = createTestClient();
 
-  afterEach(async () => {
+  let user1, user2;
+
+  afterAll(async () => {
     await cleanupTestData(supabase1);
     await cleanupTestData(supabase2);
     await cleanupTestData(testSupabase);
   });
 
-  it("users cannot see each others' saved locations", async () => {
+  it('two users can sign up and sign in', async () => {
     expect(supabase1).toBeDefined();
+    expect(supabase2).toBeDefined();
 
-    const { data: user1, error: user1Error } = await supabase1.auth.signUp({
+    const { data: user1SignUpData, error: user1SignUpError } = await supabase1.auth.signUp({
       email: testEmail,
       password: testPassword,
     });
 
-    const { data: user2, error: user2Error } = await supabase2.auth.signUp({
+    const { data: user2SignUpData, error: user2SignUpError } = await supabase2.auth.signUp({
       email: testEmail2,
       password: testPassword,
     });
 
-    expect(user1).toBeDefined();
-    expect(user1Error).toBeNull();
-    expect(user2).toBeDefined();
-    expect(user2Error).toBeNull();
+    expect(user1SignUpData).toBeDefined();
+    expect(user1SignUpError).toBeNull();
+    expect(user2SignUpData).toBeDefined();
+    expect(user2SignUpError).toBeNull();
+
+    // Set for later use in the test
+    user1 = user1SignUpData;
+    user2 = user2SignUpData;
 
     // sign in users
     const { error: signInError1 } = await supabase1.auth.signInWithPassword({
@@ -67,17 +74,16 @@ describe('User Isolation Integration Tests', () => {
       password: testPassword,
     });
     expect(signInError2).toBeNull();
+  });
 
+  it('users cannot see own saved locations', async () => {
     // Seed test locations in the locations table
     const locations1 = await seedTestLocations(supabase1, testLocations1);
-    // validate that test locations were seeded
     expect(locations1).toBeDefined();
     expect(locations1).toHaveLength(2);
 
-    // Create list of location id's
-    const locationIds1 = locations1.map((location) => location.data.id);
-
     // Seed users with test data
+    const locationIds1 = locations1.map((location) => location.data.id);
     await seedUserSavedLocations(supabase1, locationIds1);
 
     // Perform GET from user_saved_locations tables
@@ -88,16 +94,18 @@ describe('User Isolation Integration Tests', () => {
     expect(user1Locations).toBeDefined();
     expect(user1Locations).toHaveLength(locationIds1.length);
     expect(user1LocationsError).toBeNull();
+  });
 
-    // Validate that user 2 cannot see user 1's data
+  it("users cannot see each other's saved locations", async () => {
     const { data: user2Locations, error: user2LocationsError } = await supabase2
       .from('user_saved_locations')
       .select('*');
     expect(user2Locations).toBeDefined();
     expect(user2Locations).toHaveLength(0);
     expect(user2LocationsError).toBeNull();
+  });
 
-    // Validate user 2 cannot delete user 1's data
+  it("users cannot delete each other's saved locations", async () => {
     const { data: user2DeleteData, error: user2DeleteError } = await supabase2
       .from('user_saved_locations')
       .delete()
@@ -117,10 +125,11 @@ describe('User Isolation Integration Tests', () => {
       await supabase1.from('user_saved_locations').select('*');
 
     expect(user1LocationsAfter2Delete).toBeDefined();
-    expect(user1LocationsAfter2Delete).toHaveLength(locationIds1.length);
+    expect(user1LocationsAfter2Delete).toHaveLength(testLocations1.length);
     expect(user1LocationsAfter2DeleteError).toBeNull();
+  });
 
-    // Validate user 1 can delete their own data
+  it('users can delete their own saved locations', async () => {
     const { error: user1DeleteError } = await supabase1
       .from('user_saved_locations')
       .delete()
@@ -134,6 +143,4 @@ describe('User Isolation Integration Tests', () => {
     expect(user1LocationsAfterDelete).toHaveLength(0);
     expect(user1LocationsAfterDeleteError).toBeNull();
   });
-
-  it.todo("users cannot delete each other's saved locations", async () => {});
 });
