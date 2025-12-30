@@ -20,7 +20,7 @@ export default function LoginPage() {
         <CardContent>
           <form>
             <Field className="w-max-content">
-              <FieldSet className="text-xl font-bold">Welcome!</FieldSet>
+              <FieldSet className="text-xl font-bold">Welcome to WeatherApp!</FieldSet>
               <FieldDescription className="text-md">
                 Please enter your email and password to proceed.
               </FieldDescription>
