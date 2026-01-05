@@ -3,7 +3,7 @@
 import React from 'react';
 import TemperatureGraph from './temperature-graph';
 
-import convertToTime from '../utils/time';
+import convertToTime from '@/utils/time';
 
 function TemperatureGraphContainer({ weather }) {
   const tempData = weather.hourly.map((item) => ({

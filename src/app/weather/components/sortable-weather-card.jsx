@@ -4,7 +4,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import WeatherCard from './weather-card';
+import WeatherCard from '@/app/weather/components/weather-card';
 
 export default function SortableWeatherCard({ id, weather, onRemove, onExpand }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({

@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import WeatherCardsList from '@/components/weather-cards-list';
-import WeatherCardModal from '@/components/weather-card-modal';
+import WeatherCardsList from '@/app/weather/components/weather-cards-list';
+import WeatherCardModal from '@/app/weather/components/weather-card-modal';
 import {
   DndContext,
   closestCenter,

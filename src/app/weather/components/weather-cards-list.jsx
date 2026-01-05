@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
-import SortableWeatherCard from './sortable-weather-card';
-import useStore from '../store/useWeatherStore';
+import SortableWeatherCard from '@/app/weather/components/sortable-weather-card';
+import useStore from '@/store/useWeatherStore';
 
 const debug = false;
 

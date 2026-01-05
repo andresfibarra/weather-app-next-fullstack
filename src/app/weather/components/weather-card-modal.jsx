@@ -6,7 +6,7 @@ import { FaRegWindowClose } from 'react-icons/fa';
 
 import UVIndexGraph from './uv-index-graph';
 import TemperatureGraphContainer from './temperature-graph-container';
-import convertToTime from '../utils/time';
+import convertToTime from '@/utils/time';
 
 function WeatherCardModal({ weather, onClose }) {
   const closeRef = useRef(null);
