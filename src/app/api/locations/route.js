@@ -39,11 +39,23 @@ export async function GET(request) {
     .from('user_saved_locations')
     .select(
       '*, locations(longitude, latitude, location, state_code, country_code, time_zone_abbreviation)',
-    )
-    .eq('user_id', HARDCODED_USER_ID);
+    );
   if (selectError) {
     return NextResponse.json({ error: selectError.message }, { status: 500 });
   }
+  console.log('-------------------');
+  console.log('GET /api/locations Response:', selectData);
+  // for testing
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user) {
+    console.error('Error getting authenticated user when creating user saved location:', userError);
+  }
+  console.log('User:', user);
+  console.log('email: ', user?.email);
+  console.log('-------------------');
   return NextResponse.json(selectData, { status: 200 });
 }
 

@@ -3,6 +3,8 @@
  * https://supabase.com/docs/guides/auth/server-side/creating-a-client?queryGroups=package-manager&package-manager=npm&queryGroups=framework&framework=nextjs
  * Additional clarification was found from:
  * https://supabase.com/docs/guides/getting-started/tutorials/with-nextjs?queryGroups=database-method&database-method=sql
+ * Further code on redirection and auth from:
+ * https://www.youtube.com/watch?v=v6UvgfSIjQ0
  */
 
 import { updateSession } from '@/utils/supabase/proxy';
