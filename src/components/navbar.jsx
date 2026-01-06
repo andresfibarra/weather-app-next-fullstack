@@ -8,7 +8,6 @@ import { useAuth } from '@/utils/hooks/useAuth';
 
 function NavBar() {
   const { isAuthed } = useAuth();
-  console.log('>>>>>>>>>>>>>>>> isAuthed:', isAuthed);
 
   return (
     <header className="fixed top-0 left-0 w-full h-16 px-8 flex items-center justify-between border-b border-slate-800 backdrop-blur z-50">
