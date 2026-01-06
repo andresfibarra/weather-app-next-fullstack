@@ -1,9 +1,8 @@
 // src/app/page.jsx
 'use client';
 
-import WeatherPage from '@/app/weather/page';
 import Link from 'next/link';
-
+import { useAuth } from '@/utils/hooks/useAuth';
 import {
   TypographyH1,
   TypographyH3,
@@ -11,12 +10,27 @@ import {
   TypographyMuted,
 } from '@/components/ui/typography';
 
+import { Spinner } from '@/components/ui/spinner';
 import { Card, CardTitle, CardDescription, CardHeader, CardContent } from '@/components/ui/card';
 
 export default function HomePage() {
+  const { isAuthed, user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Spinner className="size-8" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <TypographyH1>Welcome to my project!</TypographyH1>
+      {isAuthed ? (
+        <TypographyH1>Welcome back!</TypographyH1>
+      ) : (
+        <TypographyH1>Welcome to my project!</TypographyH1>
+      )}
       <TypographyH4>This is what I used:</TypographyH4>
       <div>
         <TypographyMuted>

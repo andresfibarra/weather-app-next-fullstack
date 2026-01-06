@@ -17,10 +17,19 @@ function NavBar() {
           <Logo />
         </Button>
       </Link>
-      {isAuthed && (
-        <form action="/auth/signout" method="post">
-          <Button variant="ghost">Sign Out</Button>
-        </form>
+      {isAuthed ? (
+        <div className="flex items-center gap-2">
+          <Link href="/weather">
+            <Button variant="ghost">Weather</Button>
+          </Link>
+          <form action="/auth/signout" method="post">
+            <Button variant="ghost">Sign Out</Button>
+          </form>
+        </div>
+      ) : (
+        <Link href="/login">
+          <Button variant="ghost">Sign In</Button>
+        </Link>
       )}
     </header>
   );
