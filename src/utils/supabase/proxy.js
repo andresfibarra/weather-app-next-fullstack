@@ -25,9 +25,15 @@ export async function updateSession(request) {
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll(request) {
+        if (!request?.cookies) {
+          return [];
+        }
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
+        if (!request?.cookies) {
+          return;
+        }
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         supabaseResponse = NextResponse.next({
           request,
@@ -45,16 +51,23 @@ export async function updateSession(request) {
   // with the Supabase client, your users may be randomly logged out.
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  const pathname = request.nextUrl.pathname;
+
+  const protectedRoutes = ['/weather'];
+  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
+
+  console.log('--------------------------------');
+  console.log('Proxy talking');
+  console.log('isProtectedRoute:', isProtectedRoute);
+  console.log('pathname:', pathname);
+  console.log('--------------------------------');
+
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
+
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
   // creating a new response object with NextResponse.next() make sure to:
   // 1. Pass the request in it, like so:

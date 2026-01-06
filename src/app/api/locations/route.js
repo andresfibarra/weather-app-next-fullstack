@@ -64,11 +64,6 @@ export async function GET(request) {
   if (selectError) {
     return NextResponse.json({ error: selectError.message }, { status: 500 });
   }
-  console.log('-------------------');
-  console.log('GET /api/locations Response:', selectData);
-  console.log('User:', user);
-  console.log('email: ', user?.email);
-  console.log('-------------------');
   return NextResponse.json(selectData, { status: 200 });
 }
 
