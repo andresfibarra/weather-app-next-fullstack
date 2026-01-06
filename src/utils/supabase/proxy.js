@@ -24,7 +24,7 @@ export async function updateSession(request) {
   // variable. Always create a new one on each request.
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
-      getAll(request) {
+      getAll() {
         if (!request?.cookies) {
           return [];
         }
@@ -55,12 +55,6 @@ export async function updateSession(request) {
 
   const protectedRoutes = ['/weather'];
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
-
-  console.log('--------------------------------');
-  console.log('Proxy talking');
-  console.log('isProtectedRoute:', isProtectedRoute);
-  console.log('pathname:', pathname);
-  console.log('--------------------------------');
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
