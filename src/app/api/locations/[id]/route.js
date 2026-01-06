@@ -1,7 +1,7 @@
 // src/app/api/locations/[id]/route.js
 
 import { NextResponse } from 'next/server';
-import { supabase } from '@/utils/supabase/client';
+import { createClient } from '@/utils/supabase/server';
 
 const debug = false;
 
@@ -30,10 +30,7 @@ const debug = false;
  * @example
  * // Request
  * DELETE /api/locations/123
- * Request Body:
- * {
- *   user_id: "...",
- * }
+ * Request Body: none
  *
  * // Success Response (200)
  * {
@@ -62,16 +59,34 @@ const debug = false;
  */
 export async function DELETE(request, { params }) {
   if (debug) console.log('DELETE /api/locations/[id] received');
-  // 1. Extract location_id from URL params ([id]) and user_id from request
-  const { id } = await params;
-  const { user_id } = await request.json();
-  if (debug) {
-    console.log('locationId:', id);
-    console.log('user_id:', user_id);
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (!user || authError) {
+    console.error(
+      'Error getting authenticated user when calling DELETE /api/locations/[id]:',
+      authError,
+    );
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized', message: 'User is not authenticated' },
+      { status: 401 },
+    ); // Unauthorized
   }
 
-  // 2. validate user_id
-  if (!user_id) {
+  const userId = user.id;
+
+  // 1. Extract location_id from URL params ([id]) and user_id from request
+  const { id } = await params;
+  if (debug) {
+    console.log('locationId:', id);
+  }
+
+  // 2. validate userId
+  if (!userId) {
     return NextResponse.json(
       {
         success: false,
@@ -85,7 +100,7 @@ export async function DELETE(request, { params }) {
   const { data: record, error: recordError } = await supabase
     .from('user_saved_locations')
     .select('display_order')
-    .eq('user_id', user_id)
+    .eq('user_id', userId)
     .eq('id', id)
     .maybeSingle(); // Only 1 row should exist
 
@@ -113,7 +128,7 @@ export async function DELETE(request, { params }) {
   const { data: deleteResult, error: deleteError } = await supabase
     .from('user_saved_locations')
     .delete()
-    .eq('user_id', user_id)
+    .eq('user_id', userId)
     .eq('id', id);
   console.log('deleteResult:', deleteResult);
 
@@ -123,7 +138,7 @@ export async function DELETE(request, { params }) {
 
   // 5. Reorder remaining locations in database
   const { data: reorderData, error: reorderError } = await supabase.rpc('decrement_display_order', {
-    uid: user_id,
+    uid: userId,
     threshold: display_order,
   });
 

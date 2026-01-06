@@ -1,7 +1,7 @@
 // src/app/api/locations/route.js
 
 import { NextResponse } from 'next/server';
-import { supabase } from '@/utils/supabase/client';
+import { createClient } from '@/utils/supabase/server';
 
 const debug = false;
 const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
@@ -33,8 +33,29 @@ const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
  * {
  *   error: "Error message"
  * }
+ *
+ * // Error response (401)
+ * {
+ *   success: false,
+ *   error: "Unauthorized",
+ *   message: "User is not authenticated"
+ * }
  */
 export async function GET(request) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (!user || authError) {
+    console.error('Error getting authenticated user when calling GET /api/locations:', authError);
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized', message: 'User is not authenticated' },
+      { status: 401 },
+    ); // Unauthorized
+  }
+
   const { data: selectData, error: selectError } = await supabase
     .from('user_saved_locations')
     .select(
@@ -45,14 +66,6 @@ export async function GET(request) {
   }
   console.log('-------------------');
   console.log('GET /api/locations Response:', selectData);
-  // for testing
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError || !user) {
-    console.error('Error getting authenticated user when creating user saved location:', userError);
-  }
   console.log('User:', user);
   console.log('email: ', user?.email);
   console.log('-------------------');
@@ -86,7 +99,6 @@ export async function GET(request) {
  * @example
  * Request Body:
  * {
- *   userId: "...",
  *   location: "New York",
  *   state_code: "NY",
  *   country_code: "US",
@@ -123,26 +135,40 @@ export async function GET(request) {
  *   error: "Invalid request body",
  *   message: "Missing required fields"
  * }
+ *
+ * // Error Response (401)
+ * {
+ *   success: false,
+ *   error: "Unauthorized",
+ *   message: "User is not authenticated"
+ * }
  */
 export async function POST(request) {
   if (debug) console.log('POST /api/locations received');
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (!user || authError) {
+    console.error('Error getting authenticated user when calling POST /api/locations:', authError);
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized', message: 'User is not authenticated' },
+      { status: 401 },
+    ); // Unauthorized
+  }
+
+  const userId = user.id;
 
   // get body data
   const res = await request.json();
   if (debug) console.log('Response body:', res);
 
-  const {
-    userId,
-    location,
-    state_code,
-    country_code,
-    time_zone_abbreviation,
-    latitude,
-    longitude,
-  } = res;
+  const { location, state_code, country_code, time_zone_abbreviation, latitude, longitude } = res;
 
   if (
-    !userId || // remove once authentication is implemented
     !location ||
     !state_code ||
     !country_code ||

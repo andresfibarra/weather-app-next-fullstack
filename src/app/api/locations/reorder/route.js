@@ -1,7 +1,7 @@
 // src/app/api/locations/reorder/route.js
 
 import { NextResponse } from 'next/server';
-import { supabase } from '@/utils/supabase/client';
+import { createClient } from '@/utils/supabase/server';
 import useStore from '@/store/useWeatherStore';
 
 const debug = true;
@@ -48,6 +48,25 @@ const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 export async function POST(request) {
   const getCityWeatherById = useStore.getState().getCityWeatherById;
 
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (!user || authError) {
+    console.error(
+      'Error getting authenticated user when calling REORDER /api/locations/reorder:',
+      authError,
+    );
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized', message: 'User is not authenticated' },
+      { status: 401 },
+    ); // Unauthorized
+  }
+
+  const userId = user.id;
+
   try {
     // 1. Validate request body
     const { movedId, targetId } = await request.json();
@@ -63,7 +82,7 @@ export async function POST(request) {
     const { data: reorderData, error: reorderError } = await supabase.rpc(
       'reorder_user_locations',
       {
-        p_user_id: HARDCODED_USER_ID,
+        p_user_id: userId,
         p_moved_id: movedId,
         p_target_id: targetId,
       },

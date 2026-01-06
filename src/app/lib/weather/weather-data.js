@@ -234,7 +234,6 @@ export async function handleAddCity(newObj) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        userId: HARDCODED_USER_ID,
         location: newObj.location,
         state_code: newObj.state_code,
         country_code: newObj.country_code,
