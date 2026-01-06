@@ -9,8 +9,6 @@
 
 import { updateSession } from '@/utils/supabase/proxy';
 
-console.log('PROXY LOADED');
-
 export async function proxy(request) {
   // update user's auth session
   return await updateSession(request);
