@@ -4,12 +4,11 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
 const debug = false;
-const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 /**
  * GET /api/locations
  *
- * Fetches all locations for the hardcoded user ID
+ * Fetches all locations for the authenticated user
  *
  * @param request - The incoming HTTP request
  * @returns - JSON response containing array of user_saved_locations

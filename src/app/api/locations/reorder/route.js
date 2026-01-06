@@ -5,12 +5,11 @@ import { createClient } from '@/utils/supabase/server';
 import useStore from '@/store/useWeatherStore';
 
 const debug = true;
-const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 /**
  * POST /api/locations/reorder
  *
- * Reorders the locations for the hardcoded user ID
+ * Reorders the locations for the authenticated user
  *
  * @param request - The incoming HTTP request
  * @param request.body - JSON object containing the following:

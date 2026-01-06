@@ -6,7 +6,6 @@ import useStore from '@/store/useWeatherStore';
 import { fetchWeatherDataFromCoords, handleAddCity } from './weather-data';
 
 const debug = false;
-const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 export async function hydrateStoreFromSupabase() {
   const setLoading = useStore.getState().setLoading;

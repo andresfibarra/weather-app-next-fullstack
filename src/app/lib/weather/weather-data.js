@@ -4,7 +4,6 @@ const OPENWEATHER_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
 const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_KEY;
 
 const debug = false;
-const HARDCODED_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 /**
  * Fetches coordinates from OpenWeather API given a city name
@@ -315,9 +314,6 @@ export async function handleRemoveCity(cardUuid) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        user_id: HARDCODED_USER_ID,
-      }),
     });
 
     if (!res.ok && res.status !== 404) {
