@@ -34,7 +34,7 @@ function WeatherCardModal({ weather, onClose }) {
       <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
 
       {/* Panel */}
-      <div className="relative overflow-y-auto z-10 w-full max-w-xl max-h-screen rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
+      <div className="relative overflow-y-auto z-10 w-full max-w-3xl max-h-screen rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
           <h3 id="weather-detail-title" className="text-2xl font-semibold">

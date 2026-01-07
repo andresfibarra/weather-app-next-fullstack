@@ -7,6 +7,10 @@ import { fetchWeatherDataFromCoords, handleAddCity } from './weather-data';
 
 const debug = false;
 
+/**
+ * Hydrate the store from Supabase
+ * Clears local store to avoid duplicates, the fetches all locations for the authenticated user
+ */
 export async function hydrateStoreFromSupabase() {
   const setLoading = useStore.getState().setLoading;
   const setError = useStore.getState().setError;
