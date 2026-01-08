@@ -1,7 +1,6 @@
 // sync supabase and zustand
 
 import React from 'react';
-import { supabase } from '@/utils/supabase/client';
 import useStore from '@/store/useWeatherStore';
 import { fetchWeatherDataFromCoords, handleAddCity } from './weather-data';
 

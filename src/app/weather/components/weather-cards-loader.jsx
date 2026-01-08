@@ -20,6 +20,7 @@ export default function WeatherCardsLoader({ children }) {
 
   useEffect(() => {
     // Mark as mounted (client-side only)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
 
     // Only run in browser
