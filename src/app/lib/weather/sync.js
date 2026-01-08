@@ -56,11 +56,14 @@ export async function hydrateStoreFromSupabase() {
       await handleAddCity(newObj);
     }
 
+    return { success: true };
+
     // 3. Return and set error state in store as needed
   } catch (err) {
     if (debug) console.error(err);
 
     setError(err.message || 'Something went wrong while hydrating the store.');
+    throw err;
   } finally {
     setLoading(false);
   }

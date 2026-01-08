@@ -1,9 +1,11 @@
 // src/app/weather/page.jsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import WeatherCardsList from '@/app/weather/components/weather-cards-list';
 import WeatherCardModal from '@/app/weather/components/weather-card-modal';
+import WeatherCardsLoader from '@/app/weather/components/weather-cards-loader';
+import WeatherCardsSkeletonList from '@/app/weather/components/weather-cards-skeleton-list';
 import {
   DndContext,
   closestCenter,
@@ -37,12 +39,6 @@ export default function WeatherPage() {
   const setError = useStore((state) => state.setError);
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
-
-  // Hydrate store on mount
-  useEffect(() => {
-    if (debug) console.log('Hydrating store on mount');
-    hydrateStoreFromSupabase();
-  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -153,9 +149,11 @@ export default function WeatherPage() {
           </div>
         )}
 
-        {citiesWeather && citiesWeather.length > 0 && (
-          <WeatherCardsList onRemove={handleRemoveCard} onExpand={handleOpenCardDetails} />
-        )}
+        <Suspense fallback={<WeatherCardsSkeletonList count={3} />}>
+          <WeatherCardsLoader>
+            <WeatherCardsList onRemove={handleRemoveCard} onExpand={handleOpenCardDetails} />
+          </WeatherCardsLoader>
+        </Suspense>
       </div>
     </DndContext>
   );
