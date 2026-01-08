@@ -16,8 +16,6 @@ export async function hydrateStoreFromSupabase() {
   const setError = useStore.getState().setError;
   const clearAllCities = useStore.getState().clearAllCities;
 
-  console.log('hydrateStoreFromSupabase talking here');
-
   // Clear store to avoid duplicates
   if (debug) console.log('Clearing store to avoid duplicates');
   clearAllCities();

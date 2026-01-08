@@ -1,11 +1,10 @@
 // src/app/weather/page.jsx
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useCallback, Suspense } from 'react';
 import WeatherCardsList from '@/app/weather/components/weather-cards-list';
 import WeatherCardModal from '@/app/weather/components/weather-card-modal';
 import WeatherCardsLoader from '@/app/weather/components/weather-cards-loader';
-import WeatherCardsSkeletonList from '@/app/weather/components/weather-cards-skeleton-list';
 import {
   DndContext,
   closestCenter,
@@ -23,16 +22,10 @@ import {
   fetchWeatherData,
   handleReorder,
 } from '@/app/lib/weather/weather-data';
-import { hydrateStoreFromSupabase } from '@/app/lib/weather/sync';
 
 const debug = false;
 
-const OPENWEATHER_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_KEY;
-
 export default function WeatherPage() {
-  const citiesWeather = useStore((state) => state.citiesWeather);
-
   const loading = useStore((state) => state.loading);
   const error = useStore((state) => state.error);
   const setLoading = useStore((state) => state.setLoading);
@@ -129,8 +122,6 @@ export default function WeatherPage() {
           className="mb-4 w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
         />
 
-        {loading && <div className="mt-1 text-[0.9rem] text-sky-400">Loading weather...</div>}
-
         {!loading && error?.message && (
           <div
             className="
@@ -149,11 +140,9 @@ export default function WeatherPage() {
           </div>
         )}
 
-        <Suspense fallback={<WeatherCardsSkeletonList count={3} />}>
-          <WeatherCardsLoader>
-            <WeatherCardsList onRemove={handleRemoveCard} onExpand={handleOpenCardDetails} />
-          </WeatherCardsLoader>
-        </Suspense>
+        <WeatherCardsLoader>
+          <WeatherCardsList onRemove={handleRemoveCard} onExpand={handleOpenCardDetails} />
+        </WeatherCardsLoader>
       </div>
     </DndContext>
   );

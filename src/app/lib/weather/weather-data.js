@@ -225,8 +225,6 @@ export async function handleAddCity(newObj) {
 
   // connect to api route
   try {
-    console.log('POSTing to API');
-    console.log('newObj:', newObj);
     const res = await fetch('/api/locations', {
       method: 'POST',
       headers: {
