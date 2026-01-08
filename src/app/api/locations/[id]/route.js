@@ -35,26 +35,36 @@ const debug = false;
  * // Success Response (200)
  * {
  *   success: true,
- * message: 'Location removed successfully',
- * deletedLocationId: 123,
+ *   message: 'Location removed successfully',
+ *   deletedLocationId: 123,
  * }
  *
  * // Error Response (404)
  * {
  *   success: false,
  *   error: 'Location not found in database',
+ *   message: '...',
  * }
  *
  * // Error Response (500)
  * {
  *   success: false,
- *   error: 'Error message',
+ *   error: [Error message],
+ *   message: '...',
  * }
  *
  * // Error Response (400)
  * {
  *   success: false,
- *   error: 'User ID is required',
+ *   error: 'Unable to complete delete operation',
+ *   message: 'User ID is required for delete',
+ * }
+ *
+ * // Error Response (401)
+ * {
+ *   success: false,
+ *   error: 'User is not authenticated',
+ *   message: '...',
  * }
  */
 export async function DELETE(request, { params }) {
@@ -72,9 +82,9 @@ export async function DELETE(request, { params }) {
       authError,
     );
     return NextResponse.json(
-      { success: false, error: 'Unauthorized', message: 'User is not authenticated' },
+      { success: false, error: 'User is not authenticated', message: authError.message },
       { status: 401 },
-    ); // Unauthorized
+    );
   }
 
   const userId = user.id;
@@ -90,7 +100,8 @@ export async function DELETE(request, { params }) {
     return NextResponse.json(
       {
         success: false,
-        error: 'User ID is required',
+        error: 'Unable to complete delete operation',
+        message: 'User ID is required for delete',
       },
       { status: 400 },
     );
@@ -106,7 +117,7 @@ export async function DELETE(request, { params }) {
 
   if (!record) {
     return NextResponse.json(
-      { success: false, error: 'Location not found in database' },
+      { success: false, error: 'Location not found in database', message: recordError.message },
       { status: 404 },
     );
   }
@@ -115,7 +126,8 @@ export async function DELETE(request, { params }) {
     return NextResponse.json(
       {
         success: false,
-        error: recordError.message,
+        error: 'Error fetching record to be deleted',
+        message: recordError.message,
       },
       { status: 500 },
     );
@@ -133,7 +145,10 @@ export async function DELETE(request, { params }) {
   console.log('deleteResult:', deleteResult);
 
   if (deleteError) {
-    return NextResponse.json({ success: false, error: deleteError.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Failed to delete location', message: deleteError.message },
+      { status: 500 },
+    );
   }
 
   // 5. Reorder remaining locations in database

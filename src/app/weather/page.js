@@ -67,7 +67,7 @@ export default function WeatherPage() {
       if (debug) console.log(newObj);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Something went wrong.');
+      setError(err.error || 'Something went wrong.');
     } finally {
       setLoading(false);
     }

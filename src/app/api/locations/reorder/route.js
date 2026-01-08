@@ -35,13 +35,22 @@ const debug = true;
  * // Error Response (500)
  * {
  *   "success": false,
- *   "message": "..."
+ *   "error": 'Unable to complete reorder operation',
+ *   "message": "...",
  * }
  *
  * // Error Response (400))
  * {
  *   "success": false,
- *   "message": "Invalid request body: Missing required fields"
+ *   error: "Unable to complete reorder operation",
+ *   message: "Invalid request body: Missing required fields for reorder operation"
+ * }
+ *
+ * // Error Response (401)
+ * {
+ *   "success": false,
+ *   error: "User is not authenticated",
+ *   "message": "..."
  * }
  */
 export async function POST(request) {
@@ -59,7 +68,7 @@ export async function POST(request) {
       authError,
     );
     return NextResponse.json(
-      { success: false, error: 'Unauthorized', message: 'User is not authenticated' },
+      { success: false, error: 'User is not authenticated', message: authError.message },
       { status: 401 },
     ); // Unauthorized
   }
@@ -72,7 +81,11 @@ export async function POST(request) {
 
     if (!movedId || !targetId) {
       return NextResponse.json(
-        { success: false, message: 'Invalid request body: Missing required fields' },
+        {
+          success: false,
+          error: 'Unable to complete reorder operation',
+          message: 'Invalid request body: Missing required fields for reorder operation',
+        },
         { status: 400 },
       );
     }
@@ -91,7 +104,14 @@ export async function POST(request) {
 
     if (reorderError) {
       console.error('Error reordering in database:', reorderError.message);
-      return NextResponse.json({ success: false, error: reorderError.message }, { status: 500 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unable to complete reorder operation',
+          message: reorderError.message,
+        },
+        { status: 500 },
+      );
     }
 
     // 3. Return success response
@@ -107,7 +127,8 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: false,
-        error: err.message || 'Internal server error',
+        error: 'Internal server error while reordering locations',
+        message: err.message,
       },
       { status: 500 },
     );

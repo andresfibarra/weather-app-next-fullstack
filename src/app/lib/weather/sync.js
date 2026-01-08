@@ -62,7 +62,7 @@ export async function hydrateStoreFromSupabase() {
   } catch (err) {
     if (debug) console.error(err);
 
-    setError(err.message || 'Something went wrong while hydrating the store.');
+    setError(err.error || 'Something went wrong while hydrating the store.');
     throw err;
   } finally {
     setLoading(false);

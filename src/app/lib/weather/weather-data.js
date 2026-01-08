@@ -270,8 +270,8 @@ export async function handleAddCity(newObj) {
     }
   } catch (err) {
     if (debug) console.error(err.message || 'ERROR ADDING CITY in handleAddCity');
-    setError(err.message || 'ERROR ADDING CITY');
-    throw new Error('ERROR ADDING CITY');
+    setError(err.error || 'ERROR ADDING CITY');
+    throw new Error(err.error || 'ERROR ADDING CITY');
   }
 }
 
@@ -333,7 +333,7 @@ export async function handleRemoveCity(cardUuid) {
 
     // 6. rollback optimistic update if error
     await handleAddCity(weatherObj);
-    setError(err.message || 'Failed to remove location from database');
+    setError(err.error || 'Failed to remove location from database');
     throw err;
   }
 }
@@ -383,6 +383,6 @@ export async function handleReorder(movedId, targetId) {
     }
   } catch (err) {
     if (debug) console.error('Failed to reorder locations:', err);
-    setError(err.message || 'Failed to reorder locations');
+    setError(err.error || 'Failed to reorder locations');
   }
 }

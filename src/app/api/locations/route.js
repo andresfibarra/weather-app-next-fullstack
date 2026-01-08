@@ -30,7 +30,9 @@ const debug = false;
  *
  * // Error response (500)
  * {
- *   error: "Error message"
+ *   success: false,
+ *   error: 'Failed to fetch user saved locations',
+ *   message: '...',
  * }
  *
  * // Error response (401)
@@ -61,7 +63,14 @@ export async function GET(request) {
       '*, locations(longitude, latitude, location, state_code, country_code, time_zone_abbreviation)',
     );
   if (selectError) {
-    return NextResponse.json({ error: selectError.message }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to fetch user saved locations',
+        message: selectError.message,
+      },
+      { status: 500 },
+    );
   }
   return NextResponse.json(selectData, { status: 200 });
 }
@@ -112,15 +121,17 @@ export async function GET(request) {
  * // Error Response (500)
  * {
  *   success: false,
- *   error: "Error message"
+ *   error: [Error],
+ *   message: '...'
  * }
  *
  * // Error Response (409)
  * {
- *   success: false,
+ *   success: true,
  *   error: "Location already exists in user locations",
  *   location_id: "...", // user_saved_locations.id
- *   displayOrder: ...
+ *   displayOrder: ...,
+ *   message: '...',
  * }
  *
  * // Error Response (400)
@@ -190,7 +201,10 @@ export async function POST(request) {
     .maybeSingle();
 
   if (locationError) {
-    return NextResponse.json({ success: false, error: locationError.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Failed to check location', message: locationError.message },
+      { status: 500 },
+    );
   }
   if (debug) console.log(`Here is locationData`, locationData); // should be zero for now
 
@@ -212,7 +226,10 @@ export async function POST(request) {
       .single());
     if (locationError || !locationData) {
       if (debug) console.error('error end of step 2', locationError);
-      return NextResponse.json({ error: locationError.message }, { status: 500 });
+      return NextResponse.json(
+        { success: false, error: 'Failed to create location', message: locationError.message },
+        { status: 500 },
+      );
     }
   }
 
@@ -228,7 +245,11 @@ export async function POST(request) {
 
   if (userSavedLocationsError) {
     return NextResponse.json(
-      { success: false, error: userSavedLocationsError.message },
+      {
+        success: false,
+        error: 'Failed to check for duplicates',
+        message: userSavedLocationsError.message,
+      },
       { status: 500 },
     );
   }
@@ -238,7 +259,7 @@ export async function POST(request) {
     if (debug) console.log(`Location already exists in user locations`);
     return NextResponse.json(
       {
-        success: false,
+        success: true,
         error: 'Location already exists in user locations',
         location_id: userSavedLocationsData.id,
         displayOrder: userSavedLocationsData.display_order,
@@ -262,8 +283,8 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: false,
-        error: maxDisplayOrderError.message,
-        message: 'Failed to get max display order',
+        error: 'Failed to get max display order',
+        message: maxDisplayOrderError.message,
       },
       { status: 500 },
     );
@@ -293,7 +314,8 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: false,
-        error: insertUserLocationError.message,
+        error: 'Failed to insert location into database',
+        message: insertUserLocationError.message,
       },
       { status: 500 },
     );
