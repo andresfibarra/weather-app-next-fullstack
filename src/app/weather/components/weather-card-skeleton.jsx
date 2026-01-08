@@ -15,10 +15,10 @@ export default function WeatherCardSkeleton() {
       gap-x-[1.2rem] gap-y-1 border border-[rgba(148,163,253,0.14)]"
     >
       {/* Location skeleton */}
-      <Skeleton className="flex gap-1 items-end">
+      <div className="flex gap-1 items-end">
         <Skeleton className="h-8 w-32 bg-slate-700 rounded" />
         <Skeleton className="h-4 w-16 bg-slate-700 rounded mb-1" />
-      </Skeleton>
+      </div>
 
       {/* Temperature label skeleton */}
       <Skeleton className="h-6 w-24 bg-slate-700 rounded" />

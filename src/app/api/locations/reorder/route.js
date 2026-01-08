@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import useStore from '@/store/useWeatherStore';
 
-const debug = true;
+const debug = false;
 
 /**
  * POST /api/locations/reorder
