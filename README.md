@@ -8,6 +8,10 @@ A full-stack weather application built with Next.js 16 and React 19, featuring r
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?logo=tailwindcss)
 ![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?logo=vitest)
 
+## Live Demo
+
+**[View Live Demo](https://your-app.vercel.app)**
+
 ---
 
 ## Features
@@ -354,13 +358,12 @@ The easiest way to deploy is using [Vercel](https://vercel.com):
 - [ ] Improved error handling
 - [ ] Improved styling
 - [ ] After error during delete, optimistic delete is rolled back, but a new card is created in the process. Improving this to restore the previous card would be preferable
-- [ ] Testing components and UI
+- [ ] Improved testing components and UI
 - [ ] End to end testing with Playwright
 - [ ] Finishing and refactoring route integration tests to accomodate for RLS policies
 
 ## Future features
 
-- [ ] Deploy a public version
 - [ ] **AI Weather Assistant** - Get personalized weather insights and outfit recommendations
 - [ ] Weather alerts and notifications
 - [ ] Extended forecast views (7-day, hourly)
