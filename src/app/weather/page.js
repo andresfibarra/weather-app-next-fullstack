@@ -94,13 +94,8 @@ export default function WeatherPage() {
 
   function handleDragEnd(event) {
     const { active, over } = event;
-    if (over) {
-      console.log('Drag end:', active);
-      console.log('Over:', over);
-    }
 
     if (active.id !== over.id) {
-      console.log('oops');
       handleReorder(active.id, over.id);
     }
   }
