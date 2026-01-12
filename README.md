@@ -10,7 +10,7 @@ A full-stack weather application built with Next.js 16 and React 19, featuring r
 
 ## Live Demo
 
-**[View Live Demo](https://your-app.vercel.app)**
+**[View Live Demo](https://afi-weather-app.vercel.app/)**
 
 ---
 

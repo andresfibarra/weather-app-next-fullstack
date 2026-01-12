@@ -29,22 +29,22 @@ export default function LoginPage() {
               <FieldGroup>
                 <Field>
                   <FieldLabel htmlFor="email">Email</FieldLabel>
-                  <FieldDescription>For testing, use email: test@test.com</FieldDescription>
                   <Input
                     id="email"
                     name="email"
                     type="email"
+                    placeholder="For demo purposes, use andres21ibarra@gmail.com or enter your own email"
                     className="border border-slate-300 rounded-md p-2"
                     required
                   />
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="password">Password:</FieldLabel>
-                  <FieldDescription>For testing, use password: password123</FieldDescription>
                   <Input
                     id="password"
                     name="password"
                     type="password"
+                    placeholder="For demo purposes, use password123 or enter your own password"
                     className="border border-slate-300 rounded-md p-2"
                     required
                   />
