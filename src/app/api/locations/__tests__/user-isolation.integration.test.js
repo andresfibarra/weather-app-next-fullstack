@@ -2,10 +2,9 @@
  * @vitest-environment node
  */
 // Test that each user's saved locations are isolated from other users' saved locations
-import { cleanupTestData, seedTestLocations, seedUserSavedLocations } from './test-utils';
-import { vi, describe, it, expect, afterAll } from 'vitest';
-import { testSupabase, createTestClient } from '@/utils/supabase/test-client';
-import { testLocations1 } from './test-locations';
+import { vi, describe, it, expect, afterAll, beforeAll } from 'vitest';
+import { createTestClient, createServiceRoleClient } from '@/utils/supabase/test-client';
+import { testLocations2 } from './test-locations';
 
 // Mock the supabase client module to use testSupabase instead
 vi.mock('@/utils/supabase/client', () => {
@@ -22,6 +21,50 @@ vi.mock('@/utils/supabase/client', () => {
   };
 });
 
+// Service role client for test setup/teardown (bypasses RLS)
+let serviceClient;
+
+// Track user IDs for cleanup
+let testUserIds = [];
+
+// Cleanup helper using service role client - only cleans up THIS test's data
+async function cleanupTestData() {
+  // Only delete user_saved_locations for users we created
+  for (const userId of testUserIds) {
+    await serviceClient.from('user_saved_locations').delete().eq('user_id', userId);
+  }
+  // Clean up locations created by tests
+  for (const loc of testLocations2) {
+    await serviceClient.from('locations').delete().eq('location', loc.location);
+  }
+}
+
+// Create test location using service role client
+async function createTestLocation(overrides = {}) {
+  const location = {
+    location: 'Test City',
+    state_code: 'TS',
+    country_code: 'US',
+    time_zone_abbreviation: 'EST',
+    latitude: 40.7128,
+    longitude: -74.006,
+    ...overrides,
+  };
+
+  const { data, error } = await serviceClient.from('locations').insert(location).select().single();
+  if (error) {
+    // Location might already exist, try to fetch it
+    const { data: existingData } = await serviceClient
+      .from('locations')
+      .select('*')
+      .eq('location', location.location)
+      .eq('state_code', location.state_code)
+      .single();
+    return existingData;
+  }
+  return data;
+}
+
 describe('User Isolation Integration Tests', () => {
   const testEmail = `test-${Date.now()}@fakegmail.com`;
   const testEmail2 = `test--${Date.now()}@fakegmail.com`;
@@ -31,12 +74,14 @@ describe('User Isolation Integration Tests', () => {
   const supabase1 = createTestClient();
   const supabase2 = createTestClient();
 
-  let user1, user2;
+  let user1;
+
+  beforeAll(() => {
+    serviceClient = createServiceRoleClient();
+  });
 
   afterAll(async () => {
-    await cleanupTestData(supabase1);
-    await cleanupTestData(supabase2);
-    await cleanupTestData(testSupabase);
+    await cleanupTestData();
   });
 
   it('two users can sign up and sign in', async () => {
@@ -60,7 +105,9 @@ describe('User Isolation Integration Tests', () => {
 
     // Set for later use in the test
     user1 = user1SignUpData;
-    user2 = user2SignUpData;
+
+    // Track user IDs for cleanup
+    testUserIds = [user1SignUpData.user.id, user2SignUpData.user.id];
 
     // sign in users
     const { error: signInError1 } = await supabase1.auth.signInWithPassword({
@@ -76,24 +123,44 @@ describe('User Isolation Integration Tests', () => {
     expect(signInError2).toBeNull();
   });
 
-  it('users cannot see own saved locations', async () => {
-    // Seed test locations in the locations table
-    const locations1 = await seedTestLocations(supabase1, testLocations1);
-    expect(locations1).toBeDefined();
-    expect(locations1).toHaveLength(2);
+  it('users can see their own saved locations', async () => {
+    // Seed test locations using service role client (bypasses RLS)
+    const locations = [];
+    for (const loc of testLocations2) {
+      const location = await createTestLocation(loc);
+      locations.push(location);
+    }
+    expect(locations).toHaveLength(2);
 
-    // Seed users with test data
-    const locationIds1 = locations1.map((location) => location.data.id);
-    await seedUserSavedLocations(supabase1, locationIds1);
+    // Seed user_saved_locations using service role client
+    for (let i = 0; i < locations.length; i++) {
+      const { error: insertError } = await serviceClient.from('user_saved_locations').insert({
+        user_id: user1.user.id,
+        location_id: locations[i].id,
+        display_order: i + 1,
+      });
+      if (insertError) console.error('Insert error:', insertError);
+    }
 
-    // Perform GET from user_saved_locations tables
-    // validate that user 1 can see their own data
+    // Verify data was inserted using service role client
+    const { data: serviceData } = await serviceClient
+      .from('user_saved_locations')
+      .select('*')
+      .eq('user_id', user1.user.id);
+    expect(serviceData).toHaveLength(locations.length);
+
+    // Verify user session is active
+    const { data: sessionData } = await supabase1.auth.getSession();
+    expect(sessionData?.session).toBeDefined();
+
+    // Perform GET from user_saved_locations tables via authenticated client
+    // validate that user 1 can see their own data (RLS should allow this)
     const { data: user1Locations, error: user1LocationsError } = await supabase1
       .from('user_saved_locations')
       .select('*');
-    expect(user1Locations).toBeDefined();
-    expect(user1Locations).toHaveLength(locationIds1.length);
     expect(user1LocationsError).toBeNull();
+    expect(user1Locations).toBeDefined();
+    expect(user1Locations).toHaveLength(locations.length);
   });
 
   it("users cannot see each other's saved locations", async () => {
@@ -125,7 +192,7 @@ describe('User Isolation Integration Tests', () => {
       await supabase1.from('user_saved_locations').select('*');
 
     expect(user1LocationsAfter2Delete).toBeDefined();
-    expect(user1LocationsAfter2Delete).toHaveLength(testLocations1.length);
+    expect(user1LocationsAfter2Delete).toHaveLength(testLocations2.length);
     expect(user1LocationsAfter2DeleteError).toBeNull();
   });
 

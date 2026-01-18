@@ -115,13 +115,6 @@ export async function DELETE(request, { params }) {
     .eq('id', id)
     .maybeSingle(); // Only 1 row should exist
 
-  if (!record) {
-    return NextResponse.json(
-      { success: false, error: 'Location not found in database', message: recordError.message },
-      { status: 404 },
-    );
-  }
-
   if (recordError) {
     return NextResponse.json(
       {
@@ -130,6 +123,13 @@ export async function DELETE(request, { params }) {
         message: recordError.message,
       },
       { status: 500 },
+    );
+  }
+
+  if (!record) {
+    return NextResponse.json(
+      { success: false, error: 'Location not found in database' },
+      { status: 404 },
     );
   }
 

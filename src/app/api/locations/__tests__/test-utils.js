@@ -32,27 +32,30 @@ async function createTestLocation(supabase, overrides = {}) {
     ...overrides,
   };
 
-  let returnData = null;
   const { data, error } = await supabase.from('locations').insert(location).select().maybeSingle();
 
   // if no data was returned, check if the location already exists
   if (!data) {
-    returnData = await supabase
+    const { data: existingData, error: existingError } = await supabase
       .from('locations')
       .select('*')
       .eq('location', location.location)
       .eq('state_code', location.state_code)
       .eq('country_code', location.country_code)
       .maybeSingle();
-  } else {
-    returnData = data;
+
+    if (existingError) {
+      console.error('Error fetching existing location:', existingError.message);
+    }
+
+    return existingData;
   }
 
   if (error) {
     console.error('Error creating test location:', error.message);
   }
 
-  return returnData;
+  return data;
 }
 
 /**

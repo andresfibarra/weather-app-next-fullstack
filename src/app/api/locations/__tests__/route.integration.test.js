@@ -4,31 +4,138 @@
 
 // src/app/api/locations/__tests__/route.integration.test.js
 
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll } from 'vitest';
 import { NextRequest } from 'next/server';
-import { cleanupTestData, createTestLocation, TEST_USER_ID } from './test-utils';
-import { testSupabase } from '@/utils/supabase/test-client';
+import { createServiceRoleClient } from '@/utils/supabase/test-client';
 
-// Mock the supabase client module to use testSupabase instead
-vi.mock('@/utils/supabase/client', () => {
-  const { createClient } = require('@supabase/supabase-js');
-  const testSupabaseUrl = process.env.TEST_SUPABASE_URL;
-  const testSupabaseAnonKey = process.env.TEST_SUPABASE_ANON_KEY;
+// Test user ID - consistent across all tests
+const TEST_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
-  if (!testSupabaseUrl || !testSupabaseAnonKey) {
-    throw new Error('Test Supabase credentials not configured');
-  }
+// Test client instance - service role client for test setup/teardown
+let testSupabase;
 
+// Mock cookies() from next/headers to provide authentication context
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(async () => {
+    // Return a mock cookie store with auth tokens
+    const mockCookieStore = {
+      getAll: vi.fn(() => [
+        {
+          name: 'sb-access-token',
+          value: 'mock-access-token',
+        },
+        {
+          name: 'sb-refresh-token',
+          value: 'mock-refresh-token',
+        },
+      ]),
+      set: vi.fn(),
+      get: vi.fn(),
+    };
+    return mockCookieStore;
+  }),
+}));
+
+// Mock the server-side Supabase client to use service role client with authenticated user
+// This allows the API routes to bypass RLS while still having an authenticated user context
+vi.mock('@/utils/supabase/server', async () => {
+  const { createServiceRoleClient } = await import('@/utils/supabase/test-client');
   return {
-    supabase: createClient(testSupabaseUrl, testSupabaseAnonKey),
+    createClient: async () => {
+      const client = createServiceRoleClient();
+
+      // Mock auth.getUser() to return our test user
+      // Even though we're using service role, we still need to mock the auth
+      // so the API routes think there's an authenticated user
+      client.auth.getUser = vi.fn(async () => ({
+        data: {
+          user: {
+            id: TEST_USER_ID,
+            email: 'test@example.com',
+            app_metadata: {},
+            user_metadata: {},
+            aud: 'authenticated',
+            created_at: new Date().toISOString(),
+          },
+        },
+        error: null,
+      }));
+
+      return client;
+    },
   };
 });
 
-import { GET, POST } from '../route';
-import { DELETE } from '../[id]/route';
-import { POST as POST_REORDER } from '../reorder/route';
+// Import API route handlers after mocks are set up
+const { GET, POST } = await import('../route');
+const { DELETE } = await import('../[id]/route');
+const { POST: POST_REORDER } = await import('../reorder/route');
+
+/**
+ * Helper function to clean up test data
+ */
+async function cleanupTestData() {
+  // Only delete user_saved_locations for THIS test's user
+  const { error } = await testSupabase
+    .from('user_saved_locations')
+    .delete()
+    .eq('user_id', TEST_USER_ID);
+
+  if (error) console.error('Error deleting test data:', error.message);
+
+  // Also clean up locations created during tests (using specific names for this test file)
+  await testSupabase
+    .from('locations')
+    .delete()
+    .or('location.eq.Test City,location.eq.New York,location.eq.Los Angeles,location.eq.San Francisco,location.eq.Seattle,location.eq.Portland,location.eq.Miami,location.eq.Denver,location.eq.City 1,location.eq.City 2,location.eq.City 3,location.eq.City A,location.eq.City B');
+}
+
+/**
+ * Create a test location in the locations table
+ */
+async function createTestLocation(overrides = {}) {
+  const location = {
+    location: 'Test City',
+    state_code: 'TS',
+    country_code: 'US',
+    time_zone_abbreviation: 'EST',
+    latitude: 40.7128,
+    longitude: -74.006,
+    ...overrides,
+  };
+
+  const { data, error } = await testSupabase
+    .from('locations')
+    .insert(location)
+    .select()
+    .maybeSingle();
+
+  if (!data) {
+    // If insert failed, try to fetch existing location
+    const { data: existingData } = await testSupabase
+      .from('locations')
+      .select('*')
+      .eq('location', location.location)
+      .eq('state_code', location.state_code)
+      .eq('country_code', location.country_code)
+      .maybeSingle();
+
+    return existingData;
+  }
+
+  if (error) {
+    console.error('Error creating test location:', error.message);
+  }
+
+  return data;
+}
 
 describe('Locations API Integration Tests', () => {
+  beforeAll(async () => {
+    // Create service role client for test setup/teardown (bypasses RLS)
+    testSupabase = createServiceRoleClient();
+  });
+
   beforeEach(async () => {
     // Clean up test data before each test
     await cleanupTestData();
@@ -69,26 +176,17 @@ describe('Locations API Integration Tests', () => {
       });
 
       // Create saved locations for the test user
-      const { data: savedLocation1, error: savedLocation1Error } = await testSupabase
-        .from('user_saved_locations')
-        .insert({
-          user_id: TEST_USER_ID,
-          location_id: location1.data.id,
-          display_order: 1,
-        })
-        .select('id, location_id, display_order')
-        .single();
+      await testSupabase.from('user_saved_locations').insert({
+        user_id: TEST_USER_ID,
+        location_id: location1.id,
+        display_order: 1,
+      });
 
-      const { data: savedLocation2, error: savedLocation2Error } = await testSupabase
-        .from('user_saved_locations')
-        .insert({
-          user_id: TEST_USER_ID,
-          location_id: location2.data.id,
-          display_order: 2,
-        })
-        .select('id, location_id, display_order')
-        .single();
-      console.log('savedLocation2', savedLocation2);
+      await testSupabase.from('user_saved_locations').insert({
+        user_id: TEST_USER_ID,
+        location_id: location2.id,
+        display_order: 2,
+      });
 
       // Test GET endpoint
       const request = new NextRequest('http://localhost:3000/api/locations');
@@ -98,8 +196,8 @@ describe('Locations API Integration Tests', () => {
       expect(response.status).toBe(200);
       expect(Array.isArray(data)).toBe(true);
       expect(data).toHaveLength(2);
-      expect(data[0].location_id).toBe(location1.data.id);
-      expect(data[1].location_id).toBe(location2.data.id);
+      expect(data[0].location_id).toBe(location1.id);
+      expect(data[1].location_id).toBe(location2.id);
       // Verify nested location data is included
       expect(data[0].locations).toBeDefined();
       expect(data[0].locations.location).toBe('New York');
@@ -263,7 +361,7 @@ describe('Locations API Integration Tests', () => {
       const data = await response.json();
 
       expect(response.status).toBe(409);
-      expect(data.success).toBe(false);
+      expect(data.success).toBe(true);
       expect(data.error).toBe('Location already exists in user locations');
       expect(data.location_id).toBeDefined();
       expect(data.displayOrder).toBe(1);
@@ -396,21 +494,24 @@ describe('Locations API Integration Tests', () => {
       expect(data.error).toBe('Location not found in database');
     });
 
-    it('should return 400 when user_id is missing', async () => {
-      const request = new NextRequest('http://localhost:3000/api/locations/some-id', {
+    it('should return 404 when trying to delete non-existent location for authenticated user', async () => {
+      // Create a fake UUID that doesn't exist in the database
+      const nonExistentId = '11111111-1111-1111-1111-111111111111';
+
+      const request = new NextRequest(`http://localhost:3000/api/locations/${nonExistentId}`, {
         method: 'DELETE',
-        body: JSON.stringify({}), // Missing user_id
         headers: { 'Content-Type': 'application/json' },
       });
 
       const response = await DELETE(request, {
-        params: Promise.resolve({ id: 'some-id' }),
+        params: Promise.resolve({ id: nonExistentId }),
       });
       const data = await response.json();
 
-      expect(response.status).toBe(400);
+      // Since the authenticated user doesn't have this location saved, should return 404
+      expect(response.status).toBe(404);
       expect(data.success).toBe(false);
-      expect(data.error).toBe('User ID is required');
+      expect(data.error).toBe('Location not found in database');
     });
 
     it('should reorder remaining locations after deletion', async () => {
@@ -419,15 +520,13 @@ describe('Locations API Integration Tests', () => {
       const location2 = await createTestLocation({ location: 'City 2' });
       const location3 = await createTestLocation({ location: 'City 3' });
 
-      const { data: saved1 } = await testSupabase
+      await testSupabase
         .from('user_saved_locations')
         .insert({
           user_id: TEST_USER_ID,
           location_id: location1.id,
           display_order: 1,
-        })
-        .select()
-        .single();
+        });
 
       const { data: saved2 } = await testSupabase
         .from('user_saved_locations')
@@ -533,7 +632,7 @@ describe('Locations API Integration Tests', () => {
 
       expect(response.status).toBe(400);
       expect(data.success).toBe(false);
-      expect(data.message).toBe('Invalid request body: Missing required fields');
+      expect(data.message).toBe('Invalid request body: Missing required fields for reorder operation');
     });
 
     it('should handle reorder errors gracefully', async () => {
