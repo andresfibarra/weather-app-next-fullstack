@@ -1,51 +1,91 @@
 'use client';
 
 import React from 'react';
-import { FaRegWindowClose, FaExpand } from 'react-icons/fa';
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function WeatherCard({ weather, onRemove, onExpand }) {
+  // Get weather description
+  const description = weather.current?.weather?.[0]?.description || '';
+
   return (
     <div
       role="button"
       tabIndex={0}
       onClick={() => onExpand(weather.id)}
-      className="relative mt-3 pl px-7 pt-6 pb-5 rounded-2xl
-      grid w-full max-w-[500px] min-w-[400px] items-center grid-cols-[2fr_auto] grid-rows-[auto-auto]
-      gap-x-[1.2rem] gap-y-1
-      border border-[rgba(148,163,253,0.14)] shadow-[0_18px_45px_rgba(15,23,42,0.9)]"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onExpand(weather.id);
+        }
+      }}
+      className={cn(
+        'group relative cursor-pointer',
+        'rounded-2xl border border-white/[0.08] p-6',
+        'bg-gradient-to-b from-white/[0.04] to-transparent',
+        'transition-all duration-500 ease-out',
+        'hover:border-white/[0.12] hover:from-white/[0.06]',
+        'focus:outline-none focus:border-white/[0.15]'
+      )}
     >
+      {/* Remove button */}
       <button
         type="button"
-        className="absolute top-1.5 left-1.5 bg-transparent border-0 text-gray-400 hover:text-red-400 transition-colors duration-200 cursor-pointer rounded-2xl "
-        onClick={() => onExpand(weather.id)}
-        aria-label="Remove weather card"
-      >
-        <FaExpand size={18} />
-      </button>
-      <button
-        type="button"
-        className="absolute top-1.5 right-1.5 bg-transparent border-0 text-gray-400 hover:text-red-400 transition-colors duration-200 cursor-pointer rounded-2xl "
         onClick={(e) => {
           e.stopPropagation();
           onRemove(weather.id);
         }}
-        aria-label="Remove weather card"
+        className={cn(
+          'absolute right-3 top-3 p-1.5 rounded-lg',
+          'text-white/20 bg-transparent',
+          'transition-all duration-300',
+          'hover:text-red-400/80 hover:bg-white/[0.05]',
+          'focus:outline-none'
+        )}
+        aria-label="Remove location"
       >
-        <FaRegWindowClose size={18} />
+        <X className="h-4 w-4" />
       </button>
 
-      <div className="flex gap-1 items-end">
-        <h2 className="text-3xl font-medium text-sky-400">{weather.location}</h2>
-        <h3 className="text-sm font-medium text-sky-400 mb-[4px]">
+      {/* Location */}
+      <div className="mb-4 pr-16">
+        <h2 className="text-2xl font-semibold tracking-tight text-white">
+          {weather.location}
+        </h2>
+        <p className="text-sm text-white/40">
           {weather.state_code && `${weather.state_code}, `}
           {weather.country_code}
-        </h3>
+        </p>
       </div>
-      <p className="m-0 text-[1.4rem] font-semibold tracking-wide">Temperature</p>
-      <p className="my-0.5 text-base text-gray-300">
-        <em>Feels like:</em> {weather.current.feels_like}°F
-      </p>
-      <p className="my-0.5 text-base text-gray-300">{weather.current.temp}°F</p>
+
+      {/* Temperature - main focus */}
+      <div className="mb-4">
+        <span className="text-5xl font-light tabular-nums text-white">
+          {Math.round(weather.current?.temp || 0)}
+        </span>
+        <span className="text-2xl font-light text-white/40">°F</span>
+      </div>
+
+      {/* Details row */}
+      <div className="flex items-center gap-6 text-sm text-white/50">
+        <div>
+          <span className="text-white/30">Feels </span>
+          <span className="text-white/60">{Math.round(weather.current?.feels_like || 0)}°</span>
+        </div>
+        {description && (
+          <div className="capitalize">{description}</div>
+        )}
+      </div>
+
+      {/* Expand hint - appears on hover */}
+      <div className={cn(
+        'absolute bottom-4 right-4',
+        'text-xs text-white/0',
+        'transition-all duration-300',
+        'group-hover:text-white/30'
+      )}>
+        Click to expand
+      </div>
     </div>
   );
 }
